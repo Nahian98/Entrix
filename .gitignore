@@ -1,12 +1,8 @@
 *.iml
 .gradle
 /local.properties
-/.idea/caches
-/.idea/libraries
-/.idea/modules.xml
-/.idea/workspace.xml
-/.idea/navEditor.xml
-/.idea/assetWizardSettings.xml
+# IDE — machine-specific, not tracked
+.idea/
 .DS_Store
 /build
 build/
@@ -15,3 +11,8 @@ build/
 .externalNativeBuild
 .cxx
 local.properties
+
+# Signing — never commit keystores or their passwords
+keystore.properties
+*.jks
+*.keystore

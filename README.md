@@ -4,7 +4,7 @@
 
 Entrix is a privacy-first Android app that automatically records when you enter and leave a configured location (your office) using the Android Geofencing API — no account, no cloud, no analytics, no ads. Everything stays on the device.
 
-[![CI](https://github.com/Nahian98/Entrix/actions/workflows/ci.yml/badge.svg)](https://github.com/Nahian98/Entrix/actions/workflows/ci.yml)
+[![CI](https://github.com/Nahian98/Entrix-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/Nahian98/Entrix-pro/actions/workflows/ci.yml)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?logo=kotlin&logoColor=white)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)
 ![Min SDK](https://img.shields.io/badge/minSdk-28-3DDC84?logo=android&logoColor=white)

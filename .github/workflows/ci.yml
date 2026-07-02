@@ -43,6 +43,11 @@ jobs:
       - name: Assemble debug APK
         run: ./gradlew assembleDebug
 
+      # Validates the R8 / ProGuard config and resource shrinking. Falls back to debug signing
+      # in CI (keystore.properties is not present), so no secrets are required.
+      - name: Assemble release (R8)
+        run: ./gradlew assembleRelease
+
       - name: Upload test reports
         if: always()
         uses: actions/upload-artifact@v4

@@ -1,5 +1,16 @@
+import java.io.FileInputStream
+import java.util.Properties
+
 plugins {
     id("entrix.android.application.compose")
+}
+
+// Release signing is driven by a git-ignored keystore.properties at the repo root. When it is
+// absent (CI, a fresh checkout), the release build falls back to debug signing so it still builds.
+val keystorePropertiesFile = rootProject.file("keystore.properties")
+val hasReleaseKeystore = keystorePropertiesFile.exists()
+val keystoreProperties = Properties().apply {
+    if (hasReleaseKeystore) FileInputStream(keystorePropertiesFile).use { load(it) }
 }
 
 android {
@@ -11,6 +22,33 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+    }
+
+    signingConfigs {
+        if (hasReleaseKeystore) {
+            create("release") {
+                storeFile = rootProject.file(keystoreProperties.getProperty("storeFile"))
+                storePassword = keystoreProperties.getProperty("storePassword")
+                keyAlias = keystoreProperties.getProperty("keyAlias")
+                keyPassword = keystoreProperties.getProperty("keyPassword")
+            }
+        }
+    }
+
+    buildTypes {
+        release {
+            isMinifyEnabled = true
+            isShrinkResources = true
+            proguardFiles(
+                getDefaultProguardFile("proguard-android-optimize.txt"),
+                "proguard-rules.pro",
+            )
+            signingConfig = if (hasReleaseKeystore) {
+                signingConfigs.getByName("release")
+            } else {
+                signingConfigs.getByName("debug")
+            }
+        }
     }
 }
 
@@ -47,6 +85,8 @@ dependencies {
     implementation(libs.koin.androidx.compose)
 
     testImplementation(libs.junit)
+    testImplementation(libs.koin.test)
+    testImplementation(libs.androidx.datastore.preferences)
     androidTestImplementation(libs.androidx.junit)
     androidTestImplementation(libs.androidx.espresso.core)
     androidTestImplementation(libs.androidx.compose.ui.test.junit4)

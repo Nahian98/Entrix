@@ -34,6 +34,7 @@ include(":core:database")
 include(":core:datastore")
 include(":core:location")
 include(":core:navigation")
+include(":core:testing")
 
 include(":domain")
 include(":data")
