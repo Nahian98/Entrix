@@ -8,6 +8,7 @@ import android.net.Uri
 import android.os.Build
 import android.os.PowerManager
 import android.provider.Settings
+import android.widget.Toast
 import androidx.activity.compose.rememberLauncherForActivityResult
 import androidx.activity.result.contract.ActivityResultContracts
 import androidx.compose.foundation.layout.Arrangement
@@ -24,6 +25,7 @@ import androidx.compose.material3.Switch
 import androidx.compose.material3.Text
 import androidx.compose.material3.TextButton
 import androidx.compose.runtime.Composable
+import androidx.compose.runtime.LaunchedEffect
 import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableIntStateOf
 import androidx.compose.runtime.remember
@@ -33,12 +35,15 @@ import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.text.font.FontWeight
 import androidx.core.content.ContextCompat
+import androidx.core.content.FileProvider
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.lifecycle.compose.LifecycleEventEffect
 import androidx.lifecycle.Lifecycle
 import com.apexbytestudio.entrix.core.designsystem.component.EntrixCard
 import com.apexbytestudio.entrix.core.designsystem.theme.EntrixSpacing
+import com.apexbytestudio.entrix.domain.model.ExportFormat
 import org.koin.androidx.compose.koinViewModel
+import java.io.File
 
 private const val GITHUB_URL = "https://github.com/Nahian98/Entrix"
 
@@ -50,6 +55,15 @@ fun SettingsScreen(
 ) {
     val context = LocalContext.current
     val trackingEnabled by viewModel.trackingEnabled.collectAsStateWithLifecycle()
+
+    LaunchedEffect(Unit) {
+        viewModel.events.collect { event ->
+            when (event) {
+                is SettingsEvent.Share -> context.shareFile(event.path, event.mimeType)
+                is SettingsEvent.Error -> Toast.makeText(context, event.message, Toast.LENGTH_SHORT).show()
+            }
+        }
+    }
 
     // Bumped on resume and after permission results to recompute system-owned statuses.
     var refreshKey by remember { mutableIntStateOf(0) }
@@ -129,6 +143,24 @@ fun SettingsScreen(
                 trailing = {
                     if (!batteryUnrestricted) {
                         TextButton(onClick = { context.openBatterySettings() }) { Text("Fix") }
+                    }
+                },
+            )
+        }
+
+        EntrixCard {
+            Text(
+                "Data",
+                style = MaterialTheme.typography.titleMedium,
+                modifier = Modifier.padding(bottom = EntrixSpacing.sm),
+            )
+            SettingRow(
+                title = "Export attendance",
+                subtitle = "Save your records as CSV or JSON",
+                trailing = {
+                    Row {
+                        TextButton(onClick = { viewModel.exportData(ExportFormat.Csv) }) { Text("CSV") }
+                        TextButton(onClick = { viewModel.exportData(ExportFormat.Json) }) { Text("JSON") }
                     }
                 },
             )
@@ -216,4 +248,16 @@ private fun Context.openUrl(url: String) {
             Intent(Intent.ACTION_VIEW, Uri.parse(url)).addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
         )
     }
+}
+
+private fun Context.shareFile(path: String, mimeType: String) {
+    val uri = FileProvider.getUriForFile(this, "$packageName.fileprovider", File(path))
+    val intent = Intent(Intent.ACTION_SEND).apply {
+        type = mimeType
+        putExtra(Intent.EXTRA_STREAM, uri)
+        addFlags(Intent.FLAG_GRANT_READ_URI_PERMISSION)
+    }
+    startActivity(
+        Intent.createChooser(intent, "Export attendance").addFlags(Intent.FLAG_ACTIVITY_NEW_TASK),
+    )
 }
