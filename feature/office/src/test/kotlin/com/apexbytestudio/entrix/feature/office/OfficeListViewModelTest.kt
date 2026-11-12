@@ -3,7 +3,7 @@ package com.apexbytestudio.entrix.feature.office
 import app.cash.turbine.test
 import com.apexbytestudio.entrix.core.model.Office
 import com.apexbytestudio.entrix.core.testing.MainDispatcherRule
-import com.apexbytestudio.entrix.domain.usecase.DeleteOfficeUseCase
+import com.apexbytestudio.entrix.domain.usecase.ArchiveOfficeUseCase
 import com.apexbytestudio.entrix.domain.usecase.ObserveOfficesUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -23,9 +23,9 @@ class OfficeListViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val observeOffices = mockk<ObserveOfficesUseCase>()
-    private val deleteOffice = mockk<DeleteOfficeUseCase>()
+    private val archiveOffice = mockk<ArchiveOfficeUseCase>()
 
-    private fun viewModel() = OfficeListViewModel(observeOffices, deleteOffice)
+    private fun viewModel() = OfficeListViewModel(observeOffices, archiveOffice)
 
     @Test
     fun `maps offices to formatted list items`() = runTest {
@@ -73,13 +73,13 @@ class OfficeListViewModelTest {
     }
 
     @Test
-    fun `delete forwards the id to the delete use case`() = runTest {
+    fun `delete forwards the id to the archive use case`() = runTest {
         every { observeOffices() } returns flowOf(emptyList())
-        coEvery { deleteOffice(any()) } returns Unit
+        coEvery { archiveOffice(any()) } returns Unit
 
         val vm = viewModel()
         vm.delete(42L)
 
-        coVerify { deleteOffice(42L) }
+        coVerify { archiveOffice(42L) }
     }
 }

@@ -10,4 +10,10 @@ data class OfficeEntity(
     val latitude: Double,
     val longitude: Double,
     val radiusMeters: Float,
+    /**
+     * Archived offices are hidden from the office list and stop being geofenced, but their row is
+     * retained so attendance history and timesheets keep their real office name. Deleting an office
+     * from the UI archives it; attendance is only ever hard-deleted via [OfficeDao.deleteAll].
+     */
+    val archived: Boolean = false,
 )

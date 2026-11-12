@@ -16,7 +16,7 @@ class ObserveAttendanceHistoryUseCase(
 ) {
     operator fun invoke(): Flow<List<HistoryVisit>> = combine(
         attendanceRepository.observeHistory(),
-        officeRepository.observeOffices(),
+        officeRepository.observeAllOffices(),
     ) { history, offices ->
         val namesById = offices.associate { it.id to it.name }
         history.map { HistoryVisit(attendance = it, officeName = namesById[it.officeId]) }

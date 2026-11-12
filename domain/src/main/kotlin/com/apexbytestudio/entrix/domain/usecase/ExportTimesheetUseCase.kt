@@ -28,7 +28,7 @@ class ExportTimesheetUseCase(
         title: String = "Entrix Timesheet",
         periodLabel: String,
     ): Result<ExportedDocument> {
-        val namesById = officeRepository.getOffices().associate { it.id to it.name }
+        val namesById = officeRepository.getAllOffices().associate { it.id to it.name }
         val inRange = attendanceRepository.getHistory()
             .filter { it.exitTime != null }
             .filter {

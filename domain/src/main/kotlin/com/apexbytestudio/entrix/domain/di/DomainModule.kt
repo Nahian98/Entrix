@@ -1,7 +1,7 @@
 package com.apexbytestudio.entrix.domain.di
 
+import com.apexbytestudio.entrix.domain.usecase.ArchiveOfficeUseCase
 import com.apexbytestudio.entrix.domain.usecase.DeleteAttendanceHistoryUseCase
-import com.apexbytestudio.entrix.domain.usecase.DeleteOfficeUseCase
 import com.apexbytestudio.entrix.domain.usecase.ExportTimesheetUseCase
 import com.apexbytestudio.entrix.domain.usecase.GetCurrentLocationUseCase
 import com.apexbytestudio.entrix.domain.usecase.ObserveAttendanceHistoryUseCase
@@ -21,7 +21,7 @@ val domainModule = module {
     factory { SaveOfficeUseCase(get()) }
     factory { ObserveOfficeUseCase(get()) }
     factory { ObserveOfficesUseCase(get()) }
-    factory { DeleteOfficeUseCase(get(), get()) }
+    factory { ArchiveOfficeUseCase(get(), get()) }
     factory { ObserveAttendanceHistoryUseCase(get(), get()) }
     factory { DeleteAttendanceHistoryUseCase(get()) }
     factory { SyncGeofencesUseCase(get(), get(), get()) }

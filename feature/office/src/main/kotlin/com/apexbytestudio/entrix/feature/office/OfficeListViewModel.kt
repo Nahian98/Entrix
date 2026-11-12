@@ -2,7 +2,7 @@ package com.apexbytestudio.entrix.feature.office
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.apexbytestudio.entrix.domain.usecase.DeleteOfficeUseCase
+import com.apexbytestudio.entrix.domain.usecase.ArchiveOfficeUseCase
 import com.apexbytestudio.entrix.domain.usecase.ObserveOfficesUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -13,7 +13,7 @@ import java.util.Locale
 
 class OfficeListViewModel(
     observeOffices: ObserveOfficesUseCase,
-    private val deleteOffice: DeleteOfficeUseCase,
+    private val archiveOffice: ArchiveOfficeUseCase,
 ) : ViewModel() {
 
     val uiState: StateFlow<OfficeListUiState> = observeOffices()
@@ -37,6 +37,6 @@ class OfficeListViewModel(
         )
 
     fun delete(officeId: Long) {
-        viewModelScope.launch { deleteOffice(officeId) }
+        viewModelScope.launch { archiveOffice(officeId) }
     }
 }

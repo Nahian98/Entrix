@@ -30,7 +30,7 @@ class ObserveReportUseCase(
 ) {
     operator fun invoke(period: ReportPeriod, offset: Int): Flow<ReportSnapshot> = combine(
         attendanceRepository.observeHistory(),
-        officeRepository.observeOffices(),
+        officeRepository.observeAllOffices(),
     ) { history, offices ->
         buildSnapshot(period, offset, history, offices)
     }

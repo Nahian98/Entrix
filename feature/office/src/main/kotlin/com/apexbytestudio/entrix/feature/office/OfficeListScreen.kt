@@ -77,7 +77,7 @@ fun OfficeListScreen(
         AlertDialog(
             onDismissRequest = { pendingDelete = null },
             title = { Text("Delete ${office.name}?") },
-            text = { Text("This removes the office and its recorded attendance. This can't be undone.") },
+            text = { Text("This stops tracking ${office.name}. Its recorded attendance is kept in your history and reports.") },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.delete(office.id)

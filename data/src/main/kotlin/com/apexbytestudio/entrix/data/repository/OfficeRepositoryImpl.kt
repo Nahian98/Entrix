@@ -21,6 +21,12 @@ class OfficeRepositoryImpl(
     override suspend fun getOffices(): List<Office> =
         officeDao.getOffices().map { it.toModel() }
 
+    override fun observeAllOffices(): Flow<List<Office>> =
+        officeDao.observeAllOffices().map { entities -> entities.map { it.toModel() } }
+
+    override suspend fun getAllOffices(): List<Office> =
+        officeDao.getAllOffices().map { it.toModel() }
+
     override suspend fun getOffice(id: Long): Office? = officeDao.getOffice(id)?.toModel()
 
     override suspend fun count(): Int = officeDao.countOffices()
@@ -30,5 +36,5 @@ class OfficeRepositoryImpl(
         return if (office.id == Office.NO_ID) office.copy(id = newId) else office
     }
 
-    override suspend fun deleteOffice(id: Long) = officeDao.deleteOffice(id)
+    override suspend fun archiveOffice(id: Long) = officeDao.archiveOffice(id)
 }

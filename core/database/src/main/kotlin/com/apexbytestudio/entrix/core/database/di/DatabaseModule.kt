@@ -11,7 +11,9 @@ val databaseModule = module {
             androidContext(),
             EntrixDatabase::class.java,
             EntrixDatabase.NAME,
-        ).build()
+        )
+            .addMigrations(EntrixDatabase.MIGRATION_1_2)
+            .build()
     }
     single { get<EntrixDatabase>().officeDao() }
     single { get<EntrixDatabase>().attendanceDao() }
