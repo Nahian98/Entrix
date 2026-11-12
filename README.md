@@ -2,7 +2,7 @@
 
 **Automatic Place & Attendance Tracker**
 
-Entrix is a privacy-first Android app that automatically records when you enter and leave a configured location (your office) using the Android Geofencing API — no account, no cloud, no analytics, no ads. Everything stays on the device.
+Entrix is a privacy-first Android app that automatically records when you enter and leave your offices using the Android Geofencing API — then turns those visits into history, reports and shareable PDF timesheets. No account, no cloud, no analytics, no ads. Everything stays on the device.
 
 [![CI](https://github.com/Nahian98/Entrix-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/Nahian98/Entrix-pro/actions/workflows/ci.yml)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?logo=kotlin&logoColor=white)
@@ -11,7 +11,7 @@ Entrix is a privacy-first Android app that automatically records when you enter 
 ![Architecture](https://img.shields.io/badge/architecture-Clean%20%2B%20Multi--module-orange)
 ![License](https://img.shields.io/badge/license-MIT-blue)
 
-> ⚠️ Portfolio / work-in-progress. The app is functionally complete and fully builds; it has not yet been hardened for a Play Store release (R8/signing) — see the [Roadmap](#roadmap).
+> 🧪 Portfolio project. Functionally complete, release-hardened (R8 + resource shrinking + signing config) and CI-gated — see the [Roadmap](#roadmap) for what's next.
 
 ---
 
@@ -21,10 +21,12 @@ Most attendance apps want a login, a server, and your data. Entrix is the opposi
 
 ## Features
 
-- 📍 Configure a single office location and geofence radius
+- 📍 Track **multiple offices**, each with its own location and geofence radius
 - 🟢 Automatic, battery-friendly **entry / exit detection** via geofencing (no continuous polling, no foreground service)
-- 🕓 Local attendance history with per-day grouping and durations
-- 🗑️ Delete history; edit the configured office
+- 🕓 Local attendance history, grouped by day and labelled per office
+- 📊 **Weekly & monthly reports** — totals, days present, per-office breakdown, a bar chart, and trend vs. the previous period
+- 📄 **Export timesheets to PDF** and share them — generated on-device, no third-party libraries
+- 🗑️ Delete an office without losing its data — offices are **archived**, so past history and timesheets stay intact
 - 🔒 100% local — no account, no network, no tracking
 - 🎨 Material 3 UI with dynamic color, light/dark themes
 - 🔁 Geofences automatically restored after device reboot
@@ -52,6 +54,7 @@ graph TD
         dashboard[":feature:dashboard"]
         attendance[":feature:attendance"]
         office[":feature:office"]
+        reports[":feature:reports"]
         settings[":feature:settings"]
     end
 
@@ -66,11 +69,13 @@ graph TD
         database[":core:database"]
         datastore[":core:datastore"]
         location[":core:location"]
+        export[":core:export"]
     end
 
     app --> Features
     app --> data
     app --> location
+    app --> export
     Features --> domain
     Features --> designsystem
     Features --> navigation
@@ -79,6 +84,7 @@ graph TD
     data --> datastore
     data --> location
     location --> domain
+    export --> domain
     domain --> model
 ```
 
@@ -89,19 +95,21 @@ Key rule: **`:domain` and `:core:model` are pure Kotlin/JVM modules** — they c
 | Module | Type | Responsibility |
 |---|---|---|
 | `:app` | app | Application, Koin start-up, navigation host, theme entry, composition root |
-| `:feature:dashboard` | android-lib | Current status + today's summary |
-| `:feature:attendance` | android-lib | History list, grouped by day; delete |
-| `:feature:office` | android-lib | Office picker (location + radius) |
+| `:feature:dashboard` | android-lib | Per-office status + today's totals |
+| `:feature:attendance` | android-lib | History list, grouped by day and labelled per office; delete |
+| `:feature:office` | android-lib | Manage offices — list, add/edit, archive (location + radius) |
+| `:feature:reports` | android-lib | Weekly/monthly reports, bar chart, PDF export |
 | `:feature:settings` | android-lib | Tracking toggle, permissions, battery, about |
 | `:domain` | **JVM** | Entities-adjacent models, repository interfaces, use cases |
 | `:data` | android-lib | Repository implementations, entity↔model mappers, DI |
 | `:core:model` | **JVM** | Shared domain models (`Office`, `Attendance`, …) |
 | `:core:common` | android-lib | Dispatchers, `AppResult`, shared utilities |
-| `:core:designsystem` | android-lib | Theme, spacing, reusable Compose components |
+| `:core:designsystem` | android-lib | Theme, spacing, reusable Compose components (incl. bar chart) |
 | `:core:navigation` | android-lib | Type-safe navigation routes |
-| `:core:database` | android-lib | Room database, DAOs, entities (schema exported) |
+| `:core:database` | android-lib | Room database, DAOs, entities (schema exported, migrated) |
 | `:core:datastore` | android-lib | Preferences DataStore |
 | `:core:location` | android-lib | Geofencing client, broadcast receivers, fused location |
+| `:core:export` | android-lib | Offline PDF timesheet rendering (framework `PdfDocument`) |
 
 ---
 
@@ -112,10 +120,11 @@ Key rule: **`:domain` and `:core:model` are pure Kotlin/JVM modules** — they c
 | Language | Kotlin (coroutines, `StateFlow`) |
 | UI | Jetpack Compose, Material 3, Navigation Compose (type-safe) |
 | DI | **Koin** |
-| Persistence | Room (single source of truth) + DataStore |
+| Persistence | Room (single source of truth, versioned migrations) + DataStore |
 | Location | Android Geofencing API + Fused Location Provider |
+| Reporting | On-device PDF via `android.graphics.pdf.PdfDocument`, shared through `FileProvider` |
 | Build | Gradle Kotlin DSL, Version Catalog, **`build-logic` convention plugins** |
-| Testing | JUnit, Coroutines Test, Turbine, MockK |
+| Testing | JUnit, Coroutines Test, Turbine, MockK, Room `MigrationTestHelper` |
 
 ### Engineering highlights
 
@@ -128,15 +137,15 @@ Key rule: **`:domain` and `:core:model` are pure Kotlin/JVM modules** — they c
 
 ## How geofencing works
 
-Entrix never polls location. It registers a single geofence and reacts to OS-delivered transitions. To stay accurate **and** avoid logging drive-bys or GPS jitter at the boundary, it uses a deliberate reconciliation policy (`RecordGeofenceTransitionUseCase`):
+Entrix never polls location. It registers one geofence per configured office and reacts to OS-delivered transitions. To stay accurate **and** avoid logging drive-bys or GPS jitter at the boundary, it uses a deliberate reconciliation policy (`RecordGeofenceTransitionUseCase`):
 
 ```
-ENTER  →  cache the precise crossing time (persisted, survives process death)
+ENTER  →  cache the precise crossing time (persisted per office, survives process death)
 DWELL  →  open a visit, back-dated to the cached ENTER time
 EXIT   →  close the open visit; discard any unconfirmed ENTER
 ```
 
-A visit is only created once the user has **dwelled** (~2 min) inside the region — so a brief pass near the boundary leaves no record — yet `enterTime` is still the real moment of entry because the ENTER timestamp was cached. Every branch is idempotent, so duplicate transitions can't corrupt state. This logic is covered by unit tests.
+A visit is only created once the user has **dwelled** (~2 min) inside the region — so a brief pass near the boundary leaves no record — yet `enterTime` is still the real moment of entry because the ENTER timestamp was cached. The pending ENTER is tracked **per office**, so simultaneous visits to different offices never interfere. Every branch is idempotent, so duplicate transitions can't corrupt state. This logic is covered by unit tests.
 
 Geofences are re-registered on boot, transitions are handled in a `BroadcastReceiver` via `goAsync()` (no foreground service), and Google Play Services availability and permission revocation are handled gracefully.
 
@@ -160,19 +169,28 @@ No API keys or `local.properties` secrets are required to build or run.
 
 ## Testing
 
-- **24 JVM unit tests** across `:domain` and `:data` — including full coverage of the geofence reconciliation policy, office validation, the dashboard aggregation, and persistence mappers.
-- An **instrumented Room DAO test** (open/close a visit, foreign-key cascade) — run on a device with `./gradlew connectedDebugAndroidTest`.
-- Room validates all DAO SQL **at compile time** via KSP, and the database schema is exported to `core/database/schemas/` for migration review.
+- **54 JVM unit tests** across the domain, data and feature modules — including full coverage of the geofence reconciliation policy, multi-office dashboard/report aggregation, PDF timesheet assembly, office validation, ViewModels, and persistence mappers.
+- **Instrumented Room tests** — DAO open/close + foreign-key cascade, and a **v1→v2 migration test** verifying the `archived` column is added without losing data — run on a device with `./gradlew connectedDebugAndroidTest`.
+- Room validates all DAO SQL **at compile time** via KSP; the schema is exported to `core/database/schemas/` and migrations are tested against it.
+- A `KoinGraphTest` statically `verify()`s the full DI graph, catching missing bindings at build time.
 
 ---
 
 ## Roadmap
 
-- [ ] Screenshots + on-device verification pass
-- [ ] Release hardening (R8/minify, ProGuard rules, release signing)
-- [ ] CI (GitHub Actions: build + tests + lint) and a Koin graph `verify()` check
+Delivered:
+
+- [x] Multiple offices
+- [x] Reports & statistics (weekly/monthly, per-office breakdown, trend)
+- [x] PDF timesheet export
+- [x] Release hardening (R8/minify, resource shrinking, ProGuard rules, release signing)
+- [x] CI (GitHub Actions: build + tests + lint) and a Koin graph `verify()` check
+- [x] Screenshots (light & dark)
+
+Planned:
+
 - [ ] Optional Google Maps picker
-- [ ] Future platform ideas (kept architecturally open, not yet implemented): multiple places, statistics, widgets, backup/restore, Wear OS
+- [ ] Future ideas (kept architecturally open): home-screen widgets, backup/restore, Wear OS, localization
 
 ## License
 
