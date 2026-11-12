@@ -8,6 +8,6 @@ import org.koin.dsl.module
 
 val officeModule = module {
     // officeId is passed at navigation time (Office.NO_ID when adding a new office).
-    viewModel { (officeId: Long) -> OfficeViewModel(officeId, get(), get(), get(), get()) }
+    viewModel { (officeId: Long) -> OfficeViewModel(officeId, get(), get(), get(), get(), get()) }
     viewModelOf(::OfficeListViewModel)
 }

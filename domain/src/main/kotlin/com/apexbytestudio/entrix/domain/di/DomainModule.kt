@@ -12,6 +12,7 @@ import com.apexbytestudio.entrix.domain.usecase.ObserveReportUseCase
 import com.apexbytestudio.entrix.domain.usecase.ObserveTrackingEnabledUseCase
 import com.apexbytestudio.entrix.domain.usecase.RecordGeofenceTransitionUseCase
 import com.apexbytestudio.entrix.domain.usecase.SaveOfficeUseCase
+import com.apexbytestudio.entrix.domain.usecase.SearchLocationUseCase
 import com.apexbytestudio.entrix.domain.usecase.SetTrackingEnabledUseCase
 import com.apexbytestudio.entrix.domain.usecase.SyncGeofencesUseCase
 import org.koin.dsl.module
@@ -29,6 +30,7 @@ val domainModule = module {
     factory { ObserveDashboardUseCase(get(), get(), get()) }
     factory { RecordGeofenceTransitionUseCase(get(), get()) }
     factory { GetCurrentLocationUseCase(get()) }
+    factory { SearchLocationUseCase(get()) }
     factory { ObserveTrackingEnabledUseCase(get()) }
     factory { ExportTimesheetUseCase(get(), get(), get()) }
     factory { ObserveReportUseCase(get(), get()) }

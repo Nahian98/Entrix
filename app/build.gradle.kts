@@ -13,6 +13,14 @@ val keystoreProperties = Properties().apply {
     if (hasReleaseKeystore) FileInputStream(keystorePropertiesFile).use { load(it) }
 }
 
+// Google Maps API key, read from the git-ignored local.properties so it never lands in VCS. Absent
+// on a fresh checkout/CI → empty string: the app still builds, the map just renders blank until a
+// key is supplied. Add `MAPS_API_KEY=...` to local.properties to enable the map picker.
+val localPropertiesFile = rootProject.file("local.properties")
+val mapsApiKey: String = Properties().apply {
+    if (localPropertiesFile.exists()) FileInputStream(localPropertiesFile).use { load(it) }
+}.getProperty("MAPS_API_KEY", "")
+
 android {
     namespace = "com.apexbytestudio.entrix"
 
@@ -22,6 +30,9 @@ android {
         versionName = "1.0"
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
+
+        // Injected into the Maps SDK <meta-data> in the manifest (see AndroidManifest.xml).
+        manifestPlaceholders["MAPS_API_KEY"] = mapsApiKey
     }
 
     signingConfigs {

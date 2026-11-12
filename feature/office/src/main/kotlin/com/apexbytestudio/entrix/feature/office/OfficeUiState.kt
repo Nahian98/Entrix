@@ -7,6 +7,7 @@ data class OfficeUiState(
     val longitude: String = "",
     val radiusMeters: Float = 150f,
     val isLoadingLocation: Boolean = false,
+    val isSearching: Boolean = false,
     val isSaving: Boolean = false,
     val errorMessage: String? = null,
 ) {

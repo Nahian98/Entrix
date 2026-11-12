@@ -6,6 +6,7 @@ import com.apexbytestudio.entrix.core.model.Office
 import com.apexbytestudio.entrix.domain.usecase.GetCurrentLocationUseCase
 import com.apexbytestudio.entrix.domain.usecase.ObserveOfficeUseCase
 import com.apexbytestudio.entrix.domain.usecase.SaveOfficeUseCase
+import com.apexbytestudio.entrix.domain.usecase.SearchLocationUseCase
 import com.apexbytestudio.entrix.domain.usecase.SyncGeofencesUseCase
 import kotlinx.coroutines.channels.Channel
 import kotlinx.coroutines.flow.MutableStateFlow
@@ -25,6 +26,7 @@ class OfficeViewModel(
     private val saveOffice: SaveOfficeUseCase,
     private val syncGeofences: SyncGeofencesUseCase,
     private val getCurrentLocation: GetCurrentLocationUseCase,
+    private val searchLocation: SearchLocationUseCase,
 ) : ViewModel() {
 
     private val _uiState = MutableStateFlow(OfficeUiState(isEditing = officeId != Office.NO_ID))
@@ -54,6 +56,39 @@ class OfficeViewModel(
     fun onLatitudeChange(value: String) = _uiState.update { it.copy(latitude = value, errorMessage = null) }
     fun onLongitudeChange(value: String) = _uiState.update { it.copy(longitude = value, errorMessage = null) }
     fun onRadiusChange(value: Float) = _uiState.update { it.copy(radiusMeters = value) }
+
+    /** Called when the user picks a point on the map; mirrors into the coordinate fields. */
+    fun onLocationPicked(latitude: Double, longitude: Double) = _uiState.update {
+        it.copy(
+            latitude = latitude.toCoordinateString(),
+            longitude = longitude.toCoordinateString(),
+            errorMessage = null,
+        )
+    }
+
+    /** Resolves a typed place/address to coordinates and moves the pin there. */
+    fun onSearchLocation(query: String) {
+        val trimmed = query.trim()
+        if (trimmed.isEmpty()) return
+        viewModelScope.launch {
+            _uiState.update { it.copy(isSearching = true, errorMessage = null) }
+            searchLocation(trimmed)
+                .onSuccess { coordinates ->
+                    _uiState.update {
+                        it.copy(
+                            latitude = coordinates.latitude.toCoordinateString(),
+                            longitude = coordinates.longitude.toCoordinateString(),
+                            isSearching = false,
+                        )
+                    }
+                }
+                .onFailure {
+                    _uiState.update {
+                        it.copy(isSearching = false, errorMessage = "Couldn't find that location.")
+                    }
+                }
+        }
+    }
 
     fun onLocationPermissionDenied() = _uiState.update {
         it.copy(errorMessage = "Location permission is needed to use your current location.")

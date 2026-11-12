@@ -7,6 +7,7 @@ import com.apexbytestudio.entrix.core.testing.MainDispatcherRule
 import com.apexbytestudio.entrix.domain.usecase.GetCurrentLocationUseCase
 import com.apexbytestudio.entrix.domain.usecase.ObserveOfficeUseCase
 import com.apexbytestudio.entrix.domain.usecase.SaveOfficeUseCase
+import com.apexbytestudio.entrix.domain.usecase.SearchLocationUseCase
 import com.apexbytestudio.entrix.domain.usecase.SyncGeofencesUseCase
 import io.mockk.coEvery
 import io.mockk.coVerify
@@ -28,6 +29,7 @@ class OfficeViewModelTest {
     private val saveOffice = mockk<SaveOfficeUseCase>()
     private val syncGeofences = mockk<SyncGeofencesUseCase>()
     private val getCurrentLocation = mockk<GetCurrentLocationUseCase>()
+    private val searchLocation = mockk<SearchLocationUseCase>()
 
     @Before
     fun setUp() {
@@ -36,7 +38,7 @@ class OfficeViewModelTest {
     }
 
     private fun viewModel() =
-        OfficeViewModel(Office.NO_ID, observeOffice, saveOffice, syncGeofences, getCurrentLocation)
+        OfficeViewModel(Office.NO_ID, observeOffice, saveOffice, syncGeofences, getCurrentLocation, searchLocation)
 
     @Test
     fun `valid save persists, syncs geofences and emits Saved`() = runTest {
@@ -78,5 +80,26 @@ class OfficeViewModelTest {
 
         assertEquals("23.780000", vm.uiState.value.latitude)
         assertEquals("90.410000", vm.uiState.value.longitude)
+    }
+
+    @Test
+    fun `search moves the pin to the resolved coordinates`() = runTest {
+        coEvery { searchLocation("Dhaka") } returns Result.success(Coordinates(23.8103, 90.4125))
+
+        val vm = viewModel()
+        vm.onSearchLocation("Dhaka")
+
+        assertEquals("23.810300", vm.uiState.value.latitude)
+        assertEquals("90.412500", vm.uiState.value.longitude)
+    }
+
+    @Test
+    fun `failed search surfaces an error`() = runTest {
+        coEvery { searchLocation(any()) } returns Result.failure(RuntimeException("no match"))
+
+        val vm = viewModel()
+        vm.onSearchLocation("nowhere")
+
+        assertEquals("Couldn't find that location.", vm.uiState.value.errorMessage)
     }
 }
