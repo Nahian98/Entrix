@@ -4,6 +4,7 @@ import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apexbytestudio.entrix.domain.model.HistoryVisit
 import com.apexbytestudio.entrix.domain.usecase.DeleteAttendanceHistoryUseCase
+import com.apexbytestudio.entrix.domain.usecase.DeleteVisitUseCase
 import com.apexbytestudio.entrix.domain.usecase.ObserveAttendanceHistoryUseCase
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
@@ -17,6 +18,7 @@ import java.time.format.DateTimeFormatter
 class AttendanceViewModel(
     observeHistory: ObserveAttendanceHistoryUseCase,
     private val deleteHistory: DeleteAttendanceHistoryUseCase,
+    private val deleteVisit: DeleteVisitUseCase,
 ) : ViewModel() {
 
     val uiState: StateFlow<AttendanceUiState> = observeHistory()
@@ -29,6 +31,10 @@ class AttendanceViewModel(
 
     fun clearHistory() {
         viewModelScope.launch { deleteHistory() }
+    }
+
+    fun delete(id: Long) {
+        viewModelScope.launch { deleteVisit(id) }
     }
 }
 
@@ -54,6 +60,7 @@ private fun HistoryVisit.toVisitUi(): AttendanceVisitUi = AttendanceVisitUi(
     entry = timeFormatter.format(attendance.enterTime),
     exit = attendance.exitTime?.let(timeFormatter::format) ?: "In progress",
     duration = attendance.duration?.formatHoursMinutes() ?: "—",
+    needsReview = needsReview,
 )
 
 private fun Duration.formatHoursMinutes(): String {

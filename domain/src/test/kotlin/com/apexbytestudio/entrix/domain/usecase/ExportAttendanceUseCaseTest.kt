@@ -8,6 +8,7 @@ import com.apexbytestudio.entrix.domain.fake.FakeOfficeRepository
 import com.apexbytestudio.entrix.domain.model.ExportFormat
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
@@ -26,6 +27,7 @@ class ExportAttendanceUseCaseTest {
         attendanceRepo.seed(
             Attendance(1, 1, Instant.parse("2026-06-22T09:00:00Z"), Instant.parse("2026-06-22T11:00:00Z"), Instant.parse("2026-06-22T09:00:00Z")),
             Attendance(2, 1, Instant.parse("2026-06-23T09:00:00Z"), null, Instant.parse("2026-06-23T09:00:00Z")), // open visit
+            Attendance(3, 1, Instant.parse("2026-06-24T09:00:00Z"), Instant.parse("2026-06-26T09:00:00Z"), Instant.parse("2026-06-24T09:00:00Z")), // 48h → needs review
         )
 
         val result = useCase(ExportFormat.Csv)
@@ -34,14 +36,18 @@ class ExportAttendanceUseCaseTest {
         assertEquals(ExportFormat.Csv, exporter.lastFormat)
 
         val rows = exporter.lastRows!!
-        assertEquals(2, rows.size)
+        assertEquals(3, rows.size)
 
-        val closed = rows.first { it.exitTime != null }
+        val closed = rows.first { it.durationMinutes == 120L }
         assertEquals("HQ", closed.officeName)
-        assertEquals(120L, closed.durationMinutes) // 2h
+        assertFalse(closed.needsReview) // 2h is fine
 
         val open = rows.first { it.exitTime == null }
         assertNull(open.durationMinutes)
+        assertFalse(open.needsReview) // open visits aren't flagged (no duration yet)
+
+        val tooLong = rows.first { it.durationMinutes == 2880L } // 48h
+        assertTrue(tooLong.needsReview)
     }
 
     @Test

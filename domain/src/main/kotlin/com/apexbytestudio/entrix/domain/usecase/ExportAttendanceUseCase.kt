@@ -2,6 +2,7 @@ package com.apexbytestudio.entrix.domain.usecase
 
 import com.apexbytestudio.entrix.domain.export.AttendanceExporter
 import com.apexbytestudio.entrix.domain.model.AttendanceExportRow
+import com.apexbytestudio.entrix.domain.model.AttendanceRules
 import com.apexbytestudio.entrix.domain.model.ExportFormat
 import com.apexbytestudio.entrix.domain.model.ExportedDocument
 import com.apexbytestudio.entrix.domain.repository.AttendanceRepository
@@ -26,6 +27,7 @@ class ExportAttendanceUseCase(
                 enterTime = record.enterTime,
                 exitTime = record.exitTime,
                 durationMinutes = record.duration?.toMinutes(),
+                needsReview = AttendanceRules.needsReview(record),
             )
         }
         return exporter.export(rows, format)

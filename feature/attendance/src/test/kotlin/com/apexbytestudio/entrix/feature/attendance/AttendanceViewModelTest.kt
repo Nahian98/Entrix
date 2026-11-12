@@ -5,6 +5,7 @@ import com.apexbytestudio.entrix.core.model.Attendance
 import com.apexbytestudio.entrix.core.testing.MainDispatcherRule
 import com.apexbytestudio.entrix.domain.model.HistoryVisit
 import com.apexbytestudio.entrix.domain.usecase.DeleteAttendanceHistoryUseCase
+import com.apexbytestudio.entrix.domain.usecase.DeleteVisitUseCase
 import com.apexbytestudio.entrix.domain.usecase.ObserveAttendanceHistoryUseCase
 import io.mockk.coVerify
 import io.mockk.every
@@ -25,6 +26,7 @@ class AttendanceViewModelTest {
 
     private val observeHistory = mockk<ObserveAttendanceHistoryUseCase>()
     private val deleteHistory = mockk<DeleteAttendanceHistoryUseCase>(relaxed = true)
+    private val deleteVisit = mockk<DeleteVisitUseCase>(relaxed = true)
 
     @Test
     fun `groups visits into days`() = runTest {
@@ -37,7 +39,7 @@ class AttendanceViewModelTest {
             ),
         )
 
-        val vm = AttendanceViewModel(observeHistory, deleteHistory)
+        val vm = AttendanceViewModel(observeHistory, deleteHistory, deleteVisit)
 
         vm.uiState.test {
             var state = awaitItem()
@@ -52,9 +54,19 @@ class AttendanceViewModelTest {
     fun `clear history delegates to the use case`() = runTest {
         every { observeHistory() } returns flowOf(emptyList())
 
-        val vm = AttendanceViewModel(observeHistory, deleteHistory)
+        val vm = AttendanceViewModel(observeHistory, deleteHistory, deleteVisit)
         vm.clearHistory()
 
         coVerify { deleteHistory() }
+    }
+
+    @Test
+    fun `delete removes a single record via the use case`() = runTest {
+        every { observeHistory() } returns flowOf(emptyList())
+
+        val vm = AttendanceViewModel(observeHistory, deleteHistory, deleteVisit)
+        vm.delete(7L)
+
+        coVerify { deleteVisit(7L) }
     }
 }

@@ -29,6 +29,9 @@ interface AttendanceDao {
     @Query("UPDATE attendance SET exitTime = :exitTime WHERE id = :id")
     suspend fun closeVisit(id: Long, exitTime: Long)
 
+    @Query("DELETE FROM attendance WHERE id = :id")
+    suspend fun deleteById(id: Long)
+
     @Query("DELETE FROM attendance")
     suspend fun deleteAll()
 }

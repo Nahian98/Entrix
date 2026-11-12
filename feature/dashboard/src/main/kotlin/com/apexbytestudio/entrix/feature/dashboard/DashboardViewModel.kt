@@ -8,13 +8,16 @@ import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import kotlinx.coroutines.launch
 import com.apexbytestudio.entrix.domain.usecase.ObserveDashboardUseCase
+import com.apexbytestudio.entrix.domain.usecase.ReconcileOpenVisitsUseCase
 import java.time.Duration
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
 
 class DashboardViewModel(
     observeDashboard: ObserveDashboardUseCase,
+    reconcileOpenVisits: ReconcileOpenVisitsUseCase,
 ) : ViewModel() {
 
     val uiState: StateFlow<DashboardUiState> = observeDashboard()
@@ -24,6 +27,11 @@ class DashboardViewModel(
             started = SharingStarted.WhileSubscribed(STOP_TIMEOUT_MILLIS),
             initialValue = DashboardUiState(isLoading = true),
         )
+
+    init {
+        // Heal any visit left open too long (missed EXIT) each time the app lands on the dashboard.
+        viewModelScope.launch { reconcileOpenVisits() }
+    }
 
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L

@@ -44,6 +44,10 @@ class FakeAttendanceRepository : AttendanceRepository {
         }
     }
 
+    override suspend fun deleteVisit(id: Long) {
+        records.value = records.value.filterNot { it.id == id }
+    }
+
     override suspend fun deleteAll() {
         records.value = emptyList()
     }

@@ -45,13 +45,14 @@ class FileAttendanceExporter(
     }
 
     private fun toCsv(rows: List<AttendanceExportRow>): String = buildString {
-        append("officeId,officeName,enterTime,exitTime,durationMinutes\n")
+        append("officeId,officeName,enterTime,exitTime,durationMinutes,needsReview\n")
         rows.forEach { row ->
             append(row.officeId).append(',')
             append(csvEscape(row.officeName.orEmpty())).append(',')
             append(ISO.format(row.enterTime)).append(',')
             append(row.exitTime?.let(ISO::format).orEmpty()).append(',')
-            append(row.durationMinutes?.toString().orEmpty()).append('\n')
+            append(row.durationMinutes?.toString().orEmpty()).append(',')
+            append(row.needsReview).append('\n')
         }
     }
 
@@ -64,7 +65,8 @@ class FileAttendanceExporter(
                     .put("officeName", row.officeName ?: JSONObject.NULL)
                     .put("enterTime", ISO.format(row.enterTime))
                     .put("exitTime", row.exitTime?.let(ISO::format) ?: JSONObject.NULL)
-                    .put("durationMinutes", row.durationMinutes ?: JSONObject.NULL),
+                    .put("durationMinutes", row.durationMinutes ?: JSONObject.NULL)
+                    .put("needsReview", row.needsReview),
             )
         }
         return array.toString(2)

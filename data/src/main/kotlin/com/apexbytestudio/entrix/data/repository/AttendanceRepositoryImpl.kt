@@ -41,5 +41,7 @@ class AttendanceRepositoryImpl(
     override suspend fun closeVisit(id: Long, exitTime: Instant) =
         attendanceDao.closeVisit(id, exitTime.toEpochMilli())
 
+    override suspend fun deleteVisit(id: Long) = attendanceDao.deleteById(id)
+
     override suspend fun deleteAll() = attendanceDao.deleteAll()
 }

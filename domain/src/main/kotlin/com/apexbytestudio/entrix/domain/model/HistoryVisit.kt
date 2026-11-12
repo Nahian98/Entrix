@@ -9,4 +9,6 @@ import com.apexbytestudio.entrix.core.model.Attendance
 data class HistoryVisit(
     val attendance: Attendance,
     val officeName: String?,
+    /** True when the exit is implausible (missed clock-out) and should be reviewed by the user. */
+    val needsReview: Boolean = false,
 )

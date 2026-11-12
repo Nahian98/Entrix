@@ -51,6 +51,23 @@ class AttendanceDaoTest {
     }
 
     @Test
+    fun deleteByIdRemovesOnlyThatRecord() = runTest {
+        val officeId = officeDao.upsert(office())
+        val keep = attendanceDao.insert(
+            AttendanceEntity(officeId = officeId, enterTime = 1_000, exitTime = 2_000, createdTime = 1_000),
+        )
+        val remove = attendanceDao.insert(
+            AttendanceEntity(officeId = officeId, enterTime = 3_000, exitTime = 4_000, createdTime = 3_000),
+        )
+
+        attendanceDao.deleteById(remove)
+
+        val remaining = attendanceDao.observeHistory().first()
+        assertEquals(1, remaining.size)
+        assertEquals(keep, remaining.single().id)
+    }
+
+    @Test
     fun deletingOfficeCascadesToAttendance() = runTest {
         val officeId = officeDao.upsert(office())
         attendanceDao.insert(

@@ -34,6 +34,7 @@ fun AttendanceScreen(
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var showClearDialog by remember { mutableStateOf(false) }
+    var pendingDelete by remember { mutableStateOf<AttendanceVisitUi?>(null) }
 
     when {
         uiState.isLoading -> LoadingState(modifier)
@@ -68,7 +69,7 @@ fun AttendanceScreen(
                         )
                     }
                     items(day.visits, key = { it.id }) { visit ->
-                        VisitCard(visit)
+                        VisitCard(visit = visit, onDelete = { pendingDelete = visit })
                     }
                 }
             }
@@ -91,17 +92,48 @@ fun AttendanceScreen(
             },
         )
     }
+
+    pendingDelete?.let { visit ->
+        AlertDialog(
+            onDismissRequest = { pendingDelete = null },
+            title = { Text("Delete this visit?") },
+            text = { Text("This permanently removes the ${visit.officeName} record on ${visit.entry}.") },
+            confirmButton = {
+                TextButton(onClick = {
+                    viewModel.delete(visit.id)
+                    pendingDelete = null
+                }) { Text("Delete") }
+            },
+            dismissButton = {
+                TextButton(onClick = { pendingDelete = null }) { Text("Cancel") }
+            },
+        )
+    }
 }
 
 @Composable
-private fun VisitCard(visit: AttendanceVisitUi) {
+private fun VisitCard(visit: AttendanceVisitUi, onDelete: () -> Unit) {
     EntrixCard {
-        Text(
-            text = visit.officeName,
-            style = MaterialTheme.typography.titleSmall,
-            fontWeight = FontWeight.SemiBold,
-            modifier = Modifier.padding(bottom = EntrixSpacing.xs),
-        )
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
+            Text(
+                text = visit.officeName,
+                style = MaterialTheme.typography.titleSmall,
+                fontWeight = FontWeight.SemiBold,
+            )
+            TextButton(onClick = onDelete) { Text("Delete") }
+        }
+        if (visit.needsReview) {
+            Text(
+                text = "Exit time looks off — this visit may be missing a clock-out. Delete it if it's wrong.",
+                style = MaterialTheme.typography.bodySmall,
+                color = MaterialTheme.colorScheme.error,
+                modifier = Modifier.padding(bottom = EntrixSpacing.xs),
+            )
+        }
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,

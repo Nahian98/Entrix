@@ -2,6 +2,7 @@ package com.apexbytestudio.entrix.domain.di
 
 import com.apexbytestudio.entrix.domain.usecase.ArchiveOfficeUseCase
 import com.apexbytestudio.entrix.domain.usecase.DeleteAttendanceHistoryUseCase
+import com.apexbytestudio.entrix.domain.usecase.DeleteVisitUseCase
 import com.apexbytestudio.entrix.domain.usecase.ExportAttendanceUseCase
 import com.apexbytestudio.entrix.domain.usecase.ExportTimesheetUseCase
 import com.apexbytestudio.entrix.domain.usecase.GetCurrentLocationUseCase
@@ -11,6 +12,7 @@ import com.apexbytestudio.entrix.domain.usecase.ObserveOfficeUseCase
 import com.apexbytestudio.entrix.domain.usecase.ObserveOfficesUseCase
 import com.apexbytestudio.entrix.domain.usecase.ObserveReportUseCase
 import com.apexbytestudio.entrix.domain.usecase.ObserveTrackingEnabledUseCase
+import com.apexbytestudio.entrix.domain.usecase.ReconcileOpenVisitsUseCase
 import com.apexbytestudio.entrix.domain.usecase.RecordGeofenceTransitionUseCase
 import com.apexbytestudio.entrix.domain.usecase.SaveOfficeUseCase
 import com.apexbytestudio.entrix.domain.usecase.SearchLocationUseCase
@@ -26,6 +28,8 @@ val domainModule = module {
     factory { ArchiveOfficeUseCase(get(), get()) }
     factory { ObserveAttendanceHistoryUseCase(get(), get()) }
     factory { DeleteAttendanceHistoryUseCase(get()) }
+    factory { DeleteVisitUseCase(get()) }
+    factory { ReconcileOpenVisitsUseCase(get()) }
     factory { SyncGeofencesUseCase(get(), get(), get()) }
     factory { SetTrackingEnabledUseCase(get(), get()) }
     factory { ObserveDashboardUseCase(get(), get(), get()) }

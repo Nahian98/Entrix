@@ -29,5 +29,8 @@ interface AttendanceRepository {
 
     suspend fun closeVisit(id: Long, exitTime: Instant)
 
+    /** Deletes a single record by id (per-record delete / correction). */
+    suspend fun deleteVisit(id: Long)
+
     suspend fun deleteAll()
 }

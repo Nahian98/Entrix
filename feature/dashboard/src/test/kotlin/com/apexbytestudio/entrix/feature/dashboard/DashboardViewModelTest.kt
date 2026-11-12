@@ -6,6 +6,7 @@ import com.apexbytestudio.entrix.core.testing.MainDispatcherRule
 import com.apexbytestudio.entrix.domain.model.DashboardSnapshot
 import com.apexbytestudio.entrix.domain.model.OfficeStatus
 import com.apexbytestudio.entrix.domain.usecase.ObserveDashboardUseCase
+import com.apexbytestudio.entrix.domain.usecase.ReconcileOpenVisitsUseCase
 import io.mockk.every
 import io.mockk.mockk
 import kotlinx.coroutines.flow.flowOf
@@ -24,6 +25,7 @@ class DashboardViewModelTest {
     val mainDispatcherRule = MainDispatcherRule()
 
     private val observeDashboard = mockk<ObserveDashboardUseCase>()
+    private val reconcileOpenVisits = mockk<ReconcileOpenVisitsUseCase>(relaxed = true)
 
     @Test
     fun `maps snapshot to a populated inside-office ui state`() = runTest {
@@ -43,7 +45,7 @@ class DashboardViewModelTest {
             ),
         )
 
-        val viewModel = DashboardViewModel(observeDashboard)
+        val viewModel = DashboardViewModel(observeDashboard, reconcileOpenVisits)
 
         viewModel.uiState.test {
             var state = awaitItem()
@@ -64,7 +66,7 @@ class DashboardViewModelTest {
     fun `empty snapshot maps to no office configured`() = runTest {
         every { observeDashboard() } returns flowOf(DashboardSnapshot.Empty)
 
-        val viewModel = DashboardViewModel(observeDashboard)
+        val viewModel = DashboardViewModel(observeDashboard, reconcileOpenVisits)
 
         viewModel.uiState.test {
             var state = awaitItem()

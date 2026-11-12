@@ -18,4 +18,5 @@ data class AttendanceVisitUi(
     val entry: String,
     val exit: String,
     val duration: String,
+    val needsReview: Boolean = false,
 )

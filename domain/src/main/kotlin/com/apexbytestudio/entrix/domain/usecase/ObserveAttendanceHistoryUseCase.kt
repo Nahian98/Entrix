@@ -1,5 +1,6 @@
 package com.apexbytestudio.entrix.domain.usecase
 
+import com.apexbytestudio.entrix.domain.model.AttendanceRules
 import com.apexbytestudio.entrix.domain.model.HistoryVisit
 import com.apexbytestudio.entrix.domain.repository.AttendanceRepository
 import com.apexbytestudio.entrix.domain.repository.OfficeRepository
@@ -19,6 +20,12 @@ class ObserveAttendanceHistoryUseCase(
         officeRepository.observeAllOffices(),
     ) { history, offices ->
         val namesById = offices.associate { it.id to it.name }
-        history.map { HistoryVisit(attendance = it, officeName = namesById[it.officeId]) }
+        history.map {
+            HistoryVisit(
+                attendance = it,
+                officeName = namesById[it.officeId],
+                needsReview = AttendanceRules.needsReview(it),
+            )
+        }
     }
 }
