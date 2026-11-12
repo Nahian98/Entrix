@@ -11,8 +11,14 @@ interface AttendanceDao {
     @Query("SELECT * FROM attendance ORDER BY enterTime DESC")
     fun observeHistory(): Flow<List<AttendanceEntity>>
 
+    @Query("SELECT * FROM attendance ORDER BY enterTime DESC")
+    suspend fun getHistory(): List<AttendanceEntity>
+
     @Query("SELECT * FROM attendance WHERE exitTime IS NULL ORDER BY enterTime DESC LIMIT 1")
     fun observeOpenVisit(): Flow<AttendanceEntity?>
+
+    @Query("SELECT * FROM attendance WHERE exitTime IS NULL ORDER BY enterTime DESC")
+    fun observeOpenVisits(): Flow<List<AttendanceEntity>>
 
     @Query("SELECT * FROM attendance WHERE exitTime IS NULL AND officeId = :officeId LIMIT 1")
     suspend fun getOpenVisit(officeId: Long): AttendanceEntity?

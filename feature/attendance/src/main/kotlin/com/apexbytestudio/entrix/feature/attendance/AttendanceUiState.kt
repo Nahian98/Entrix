@@ -14,6 +14,7 @@ data class AttendanceDayUi(
 
 data class AttendanceVisitUi(
     val id: Long,
+    val officeName: String,
     val entry: String,
     val exit: String,
     val duration: String,

@@ -6,7 +6,7 @@ import com.apexbytestudio.entrix.domain.fake.FakeOfficeRepository
 import com.apexbytestudio.entrix.domain.fake.FakeTrackingStateRepository
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
-import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
 import org.junit.Test
 
 class SyncGeofencesUseCaseTest {
@@ -16,8 +16,8 @@ class SyncGeofencesUseCaseTest {
     private val scheduler = FakeGeofenceScheduler()
     private val sync = SyncGeofencesUseCase(officeRepo, trackingRepo, scheduler)
 
-    private suspend fun configureOffice() = officeRepo.saveOffice(
-        Office(name = "HQ", latitude = 52.52, longitude = 13.405, radiusMeters = 150f),
+    private suspend fun configureOffice(name: String = "HQ") = officeRepo.saveOffice(
+        Office(name = name, latitude = 52.52, longitude = 13.405, radiusMeters = 150f),
     )
 
     @Test
@@ -28,7 +28,19 @@ class SyncGeofencesUseCaseTest {
         val result = sync()
 
         assertEquals(Result.success(Unit), result)
-        assertEquals(office, scheduler.registeredOffice)
+        assertEquals(listOf(office), scheduler.registeredOffices)
+        assertEquals(1, scheduler.registerCount)
+    }
+
+    @Test
+    fun `registers every configured office`() = runTest {
+        configureOffice("HQ")
+        configureOffice("Client site")
+        trackingRepo.setTrackingEnabled(true)
+
+        sync()
+
+        assertEquals(2, scheduler.registeredOffices.size)
         assertEquals(1, scheduler.registerCount)
     }
 
@@ -39,7 +51,7 @@ class SyncGeofencesUseCaseTest {
 
         sync()
 
-        assertNull(scheduler.registeredOffice)
+        assertTrue(scheduler.registeredOffices.isEmpty())
         assertEquals(1, scheduler.clearCount)
         assertEquals(0, scheduler.registerCount)
     }
@@ -63,6 +75,6 @@ class SyncGeofencesUseCaseTest {
 
         assertEquals(Result.success(Unit), result)
         assertEquals(true, trackingRepo.isTrackingEnabled())
-        assertEquals(office, scheduler.registeredOffice)
+        assertEquals(listOf(office), scheduler.registeredOffices)
     }
 }

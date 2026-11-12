@@ -2,7 +2,7 @@ package com.apexbytestudio.entrix.feature.attendance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.apexbytestudio.entrix.core.model.Attendance
+import com.apexbytestudio.entrix.domain.model.HistoryVisit
 import com.apexbytestudio.entrix.domain.usecase.DeleteAttendanceHistoryUseCase
 import com.apexbytestudio.entrix.domain.usecase.ObserveAttendanceHistoryUseCase
 import kotlinx.coroutines.flow.SharingStarted
@@ -36,23 +36,24 @@ private val zone: ZoneId = ZoneId.systemDefault()
 private val dateFormatter = DateTimeFormatter.ofPattern("EEE, d MMM yyyy")
 private val timeFormatter = DateTimeFormatter.ofPattern("HH:mm").withZone(zone)
 
-private fun List<Attendance>.toUiState(): AttendanceUiState {
-    val days = groupBy { it.enterTime.atZone(zone).toLocalDate() }
+private fun List<HistoryVisit>.toUiState(): AttendanceUiState {
+    val days = groupBy { it.attendance.enterTime.atZone(zone).toLocalDate() }
         .toSortedMap(reverseOrder())
         .map { (date, visits) ->
             AttendanceDayUi(
                 date = date.format(dateFormatter),
-                visits = visits.sortedByDescending { it.enterTime }.map { it.toVisitUi() },
+                visits = visits.sortedByDescending { it.attendance.enterTime }.map { it.toVisitUi() },
             )
         }
     return AttendanceUiState(isLoading = false, days = days)
 }
 
-private fun Attendance.toVisitUi(): AttendanceVisitUi = AttendanceVisitUi(
-    id = id,
-    entry = timeFormatter.format(enterTime),
-    exit = exitTime?.let(timeFormatter::format) ?: "In progress",
-    duration = duration?.formatHoursMinutes() ?: "—",
+private fun HistoryVisit.toVisitUi(): AttendanceVisitUi = AttendanceVisitUi(
+    id = attendance.id,
+    officeName = officeName ?: "Unknown office",
+    entry = timeFormatter.format(attendance.enterTime),
+    exit = attendance.exitTime?.let(timeFormatter::format) ?: "In progress",
+    duration = attendance.duration?.formatHoursMinutes() ?: "—",
 )
 
 private fun Duration.formatHoursMinutes(): String {

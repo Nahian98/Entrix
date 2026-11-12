@@ -3,11 +3,12 @@ package com.apexbytestudio.entrix.feature.dashboard
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
 import com.apexbytestudio.entrix.domain.model.DashboardSnapshot
-import com.apexbytestudio.entrix.domain.usecase.ObserveDashboardUseCase
+import com.apexbytestudio.entrix.domain.model.OfficeStatus
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
+import com.apexbytestudio.entrix.domain.usecase.ObserveDashboardUseCase
 import java.time.Duration
 import java.time.ZoneId
 import java.time.format.DateTimeFormatter
@@ -35,9 +36,16 @@ private val timeFormatter: DateTimeFormatter =
 private fun DashboardSnapshot.toUiState(): DashboardUiState = DashboardUiState(
     isLoading = false,
     officeConfigured = isOfficeConfigured,
-    officeName = office?.name,
-    insideOffice = isInsideOffice,
     trackingEnabled = trackingEnabled,
+    insideAnyOffice = isInsideAnyOffice,
+    todayTotal = todayTotalDuration.takeIf { !it.isZero }?.formatHoursMinutes(),
+    offices = offices.map { it.toUi() },
+)
+
+private fun OfficeStatus.toUi(): DashboardOfficeUi = DashboardOfficeUi(
+    id = office.id,
+    name = office.name,
+    insideOffice = isInside,
     todayEnter = todayFirstEnter?.let(timeFormatter::format),
     todayExit = todayLastExit?.let(timeFormatter::format),
     todayDuration = todayCompletedDuration.takeIf { !it.isZero }?.formatHoursMinutes(),

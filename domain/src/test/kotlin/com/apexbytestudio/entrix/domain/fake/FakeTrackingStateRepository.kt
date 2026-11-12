@@ -9,7 +9,7 @@ class FakeTrackingStateRepository(
     enabled: Boolean = true,
 ) : TrackingStateRepository {
     private val enabledFlow = MutableStateFlow(enabled)
-    private var pending: Instant? = null
+    private val pending = mutableMapOf<Long, Instant>()
 
     override val trackingEnabled: Flow<Boolean> = enabledFlow
 
@@ -19,9 +19,9 @@ class FakeTrackingStateRepository(
         enabledFlow.value = enabled
     }
 
-    override suspend fun getPendingEnterTime(): Instant? = pending
+    override suspend fun getPendingEnterTime(officeId: Long): Instant? = pending[officeId]
 
-    override suspend fun setPendingEnterTime(time: Instant?) {
-        pending = time
+    override suspend fun setPendingEnterTime(officeId: Long, time: Instant?) {
+        if (time == null) pending.remove(officeId) else pending[officeId] = time
     }
 }

@@ -17,6 +17,12 @@ class FakeAttendanceRepository : AttendanceRepository {
     override fun observeOpenVisit(): Flow<Attendance?> =
         records.map { list -> list.firstOrNull { it.isOpen } }
 
+    override fun observeOpenVisits(): Flow<List<Attendance>> =
+        records.map { list -> list.filter { it.isOpen } }
+
+    override suspend fun getHistory(): List<Attendance> =
+        records.value.sortedByDescending { it.enterTime }
+
     override suspend fun getOpenVisit(officeId: Long): Attendance? =
         records.value.firstOrNull { it.isOpen && it.officeId == officeId }
 

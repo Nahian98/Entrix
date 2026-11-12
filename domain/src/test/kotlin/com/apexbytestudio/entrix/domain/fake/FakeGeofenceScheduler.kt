@@ -6,22 +6,22 @@ import com.apexbytestudio.entrix.domain.geofence.GeofenceScheduler
 class FakeGeofenceScheduler(
     private val registerResult: Result<Unit> = Result.success(Unit),
 ) : GeofenceScheduler {
-    var registeredOffice: Office? = null
+    var registeredOffices: List<Office> = emptyList()
         private set
     var clearCount = 0
         private set
     var registerCount = 0
         private set
 
-    override suspend fun register(office: Office): Result<Unit> {
+    override suspend fun registerAll(offices: List<Office>): Result<Unit> {
         registerCount++
-        registeredOffice = office
+        registeredOffices = offices
         return registerResult
     }
 
     override suspend fun clear(): Result<Unit> {
         clearCount++
-        registeredOffice = null
+        registeredOffices = emptyList()
         return Result.success(Unit)
     }
 }

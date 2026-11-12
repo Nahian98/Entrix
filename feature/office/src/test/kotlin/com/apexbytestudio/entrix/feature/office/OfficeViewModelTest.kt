@@ -31,11 +31,12 @@ class OfficeViewModelTest {
 
     @Before
     fun setUp() {
-        // No pre-existing office by default (VM prefills from this in init).
-        every { observeOffice() } returns flowOf(null)
+        // Adding a new office by default: init won't load, but stub for safety.
+        every { observeOffice(any()) } returns flowOf(null)
     }
 
-    private fun viewModel() = OfficeViewModel(observeOffice, saveOffice, syncGeofences, getCurrentLocation)
+    private fun viewModel() =
+        OfficeViewModel(Office.NO_ID, observeOffice, saveOffice, syncGeofences, getCurrentLocation)
 
     @Test
     fun `valid save persists, syncs geofences and emits Saved`() = runTest {

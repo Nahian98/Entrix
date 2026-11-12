@@ -16,8 +16,14 @@ class AttendanceRepositoryImpl(
     override fun observeHistory(): Flow<List<Attendance>> =
         attendanceDao.observeHistory().map { entities -> entities.map { it.toModel() } }
 
+    override suspend fun getHistory(): List<Attendance> =
+        attendanceDao.getHistory().map { it.toModel() }
+
     override fun observeOpenVisit(): Flow<Attendance?> =
         attendanceDao.observeOpenVisit().map { it?.toModel() }
+
+    override fun observeOpenVisits(): Flow<List<Attendance>> =
+        attendanceDao.observeOpenVisits().map { entities -> entities.map { it.toModel() } }
 
     override suspend fun getOpenVisit(officeId: Long): Attendance? =
         attendanceDao.getOpenVisit(officeId)?.toModel()

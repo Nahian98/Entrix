@@ -12,15 +12,23 @@ class OfficeRepositoryImpl(
     private val officeDao: OfficeDao,
 ) : OfficeRepository {
 
-    override fun observeOffice(): Flow<Office?> =
-        officeDao.observeOffice().map { it?.toModel() }
+    override fun observeOffices(): Flow<List<Office>> =
+        officeDao.observeOffices().map { entities -> entities.map { it.toModel() } }
 
-    override suspend fun getOffice(): Office? = officeDao.getOffice()?.toModel()
+    override fun observeOffice(id: Long): Flow<Office?> =
+        officeDao.observeOffice(id).map { it?.toModel() }
+
+    override suspend fun getOffices(): List<Office> =
+        officeDao.getOffices().map { it.toModel() }
+
+    override suspend fun getOffice(id: Long): Office? = officeDao.getOffice(id)?.toModel()
+
+    override suspend fun count(): Int = officeDao.countOffices()
 
     override suspend fun saveOffice(office: Office): Office {
         val newId = officeDao.upsert(office.toEntity())
         return if (office.id == Office.NO_ID) office.copy(id = newId) else office
     }
 
-    override suspend fun deleteOffice() = officeDao.deleteAll()
+    override suspend fun deleteOffice(id: Long) = officeDao.deleteOffice(id)
 }

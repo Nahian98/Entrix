@@ -18,8 +18,8 @@ interface TrackingStateRepository {
 
     suspend fun setTrackingEnabled(enabled: Boolean)
 
-    suspend fun getPendingEnterTime(): Instant?
+    suspend fun getPendingEnterTime(officeId: Long): Instant?
 
-    /** Sets the cached candidate entry time; pass `null` to clear it. */
-    suspend fun setPendingEnterTime(time: Instant?)
+    /** Sets the cached candidate entry time for an office; pass `null` to clear it. */
+    suspend fun setPendingEnterTime(officeId: Long, time: Instant?)
 }

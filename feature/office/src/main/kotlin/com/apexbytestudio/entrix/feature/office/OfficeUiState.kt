@@ -1,7 +1,8 @@
 package com.apexbytestudio.entrix.feature.office
 
 data class OfficeUiState(
-    val name: String = "My Office",
+    val isEditing: Boolean = false,
+    val name: String = "",
     val latitude: String = "",
     val longitude: String = "",
     val radiusMeters: Float = 150f,

@@ -20,11 +20,14 @@ import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
+import androidx.navigation.toRoute
 import com.apexbytestudio.entrix.core.navigation.EntrixRoute
 import com.apexbytestudio.entrix.feature.attendance.AttendanceScreen
 import com.apexbytestudio.entrix.feature.dashboard.DashboardScreen
 import com.apexbytestudio.entrix.feature.dashboard.DashboardViewModel
+import com.apexbytestudio.entrix.feature.office.OfficeListScreen
 import com.apexbytestudio.entrix.feature.office.OfficeScreen
+import com.apexbytestudio.entrix.feature.reports.ReportsScreen
 import com.apexbytestudio.entrix.feature.settings.SettingsScreen
 import org.koin.androidx.compose.koinViewModel
 
@@ -74,19 +77,32 @@ fun EntrixApp() {
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 DashboardScreen(
                     uiState = uiState,
-                    onEditOffice = { navController.navigate(EntrixRoute.Office) },
+                    onManageOffices = { navController.navigate(EntrixRoute.OfficeList) },
                 )
             }
             composable<EntrixRoute.Attendance> {
                 AttendanceScreen()
             }
+            composable<EntrixRoute.Reports> {
+                ReportsScreen()
+            }
             composable<EntrixRoute.Settings> {
                 SettingsScreen(
-                    onEditOffice = { navController.navigate(EntrixRoute.Office) },
+                    onManageOffices = { navController.navigate(EntrixRoute.OfficeList) },
                 )
             }
-            composable<EntrixRoute.Office> {
-                OfficeScreen(onSaved = { navController.popBackStack() })
+            composable<EntrixRoute.OfficeList> {
+                OfficeListScreen(
+                    onAddOffice = { navController.navigate(EntrixRoute.OfficeEdit()) },
+                    onEditOffice = { id -> navController.navigate(EntrixRoute.OfficeEdit(id)) },
+                )
+            }
+            composable<EntrixRoute.OfficeEdit> { backStackEntry ->
+                val route = backStackEntry.toRoute<EntrixRoute.OfficeEdit>()
+                OfficeScreen(
+                    officeId = route.officeId,
+                    onSaved = { navController.popBackStack() },
+                )
             }
         }
     }

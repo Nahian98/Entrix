@@ -4,16 +4,22 @@ import com.apexbytestudio.entrix.core.model.Office
 import kotlinx.coroutines.flow.Flow
 
 /**
- * Single source of truth for the configured office. The MVP persists at most one office;
- * [observeOffice] therefore emits the current office or `null` when none is configured.
+ * Single source of truth for the configured offices. The app can track any number of offices;
+ * [observeOffices] emits the full list (empty when none is configured).
  */
 interface OfficeRepository {
-    fun observeOffice(): Flow<Office?>
+    fun observeOffices(): Flow<List<Office>>
 
-    suspend fun getOffice(): Office?
+    fun observeOffice(id: Long): Flow<Office?>
+
+    suspend fun getOffices(): List<Office>
+
+    suspend fun getOffice(id: Long): Office?
+
+    suspend fun count(): Int
 
     /** Inserts or updates the office and returns it with its persisted id. */
     suspend fun saveOffice(office: Office): Office
 
-    suspend fun deleteOffice()
+    suspend fun deleteOffice(id: Long)
 }

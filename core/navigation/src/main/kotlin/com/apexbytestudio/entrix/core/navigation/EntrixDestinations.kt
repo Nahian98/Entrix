@@ -15,8 +15,16 @@ sealed interface EntrixRoute {
     data object Attendance : EntrixRoute
 
     @Serializable
-    data object Settings : EntrixRoute
+    data object Reports : EntrixRoute
 
     @Serializable
-    data object Office : EntrixRoute
+    data object Settings : EntrixRoute
+
+    /** The list of configured offices. */
+    @Serializable
+    data object OfficeList : EntrixRoute
+
+    /** Add or edit a single office; [officeId] is 0 (Office.NO_ID) when adding a new one. */
+    @Serializable
+    data class OfficeEdit(val officeId: Long = 0L) : EntrixRoute
 }

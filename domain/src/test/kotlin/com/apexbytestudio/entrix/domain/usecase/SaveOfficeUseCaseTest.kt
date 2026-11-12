@@ -28,7 +28,7 @@ class SaveOfficeUseCaseTest {
         val saved = result.getOrThrow()
         assertEquals("HQ", saved.name)
         assertTrue(saved.id != Office.NO_ID)
-        assertEquals(saved, repository.getOffice())
+        assertEquals(saved, repository.getOffice(saved.id))
     }
 
     @Test
@@ -60,6 +60,6 @@ class SaveOfficeUseCaseTest {
     @Test
     fun `nothing is persisted when validation fails`() = runTest {
         useCase(office(name = ""))
-        assertFalse(repository.getOffice() != null)
+        assertTrue(repository.getOffices().isEmpty())
     }
 }

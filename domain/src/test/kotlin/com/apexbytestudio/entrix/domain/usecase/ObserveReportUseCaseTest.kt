@@ -1,0 +1,99 @@
+package com.apexbytestudio.entrix.domain.usecase
+
+import app.cash.turbine.test
+import com.apexbytestudio.entrix.core.model.Attendance
+import com.apexbytestudio.entrix.core.model.Office
+import com.apexbytestudio.entrix.domain.fake.FakeAttendanceRepository
+import com.apexbytestudio.entrix.domain.fake.FakeOfficeRepository
+import com.apexbytestudio.entrix.domain.model.ReportPeriod
+import kotlinx.coroutines.test.runTest
+import org.junit.Assert.assertEquals
+import org.junit.Assert.assertFalse
+import org.junit.Assert.assertNull
+import org.junit.Assert.assertTrue
+import org.junit.Test
+import java.time.Clock
+import java.time.Duration
+import java.time.Instant
+import java.time.ZoneId
+
+class ObserveReportUseCaseTest {
+
+    private val zone = ZoneId.of("UTC")
+    // A Wednesday — its Monday is 2026-06-22, so the week runs 22–28 June 2026.
+    private val clock = Clock.fixed(Instant.parse("2026-06-24T12:00:00Z"), zone)
+
+    private val attendanceRepo = FakeAttendanceRepository()
+    private val officeRepo = FakeOfficeRepository()
+    private val useCase = ObserveReportUseCase(attendanceRepo, officeRepo, clock)
+
+    private fun visit(id: Long, officeId: Long, enter: String, exit: String?) = Attendance(
+        id = id,
+        officeId = officeId,
+        enterTime = Instant.parse(enter),
+        exitTime = exit?.let(Instant::parse),
+        createdTime = Instant.parse(enter),
+    )
+
+    @Test
+    fun `weekly report aggregates completed visits and computes the trend`() = runTest {
+        officeRepo.seed(Office(id = 1, name = "HQ", latitude = 1.0, longitude = 1.0, radiusMeters = 150f))
+        attendanceRepo.seed(
+            visit(1, 1, "2026-06-22T09:00:00Z", "2026-06-22T11:00:00Z"), // Mon, 2h (this week)
+            visit(2, 1, "2026-06-24T08:00:00Z", "2026-06-24T12:00:00Z"), // Wed, 4h (this week)
+            visit(3, 1, "2026-06-24T13:00:00Z", null),                   // open, excluded
+            visit(4, 1, "2026-06-15T09:00:00Z", "2026-06-15T10:00:00Z"), // prev week, 1h
+        )
+
+        useCase(ReportPeriod.Week, offset = 0).test {
+            val report = awaitItem()
+
+            assertTrue(report.hasData)
+            assertEquals(Duration.ofHours(6), report.totalDuration)
+            assertEquals(2, report.visitCount)
+            assertEquals(2, report.daysPresent)
+            assertEquals(Duration.ofHours(3), report.averagePerActiveDay)
+            assertEquals(7, report.bars.size) // one per weekday
+            assertEquals(Duration.ofHours(1), report.previousTotal)
+            assertEquals(500, report.trendPercent) // (6h - 1h) / 1h
+            assertEquals(1, report.offices.size)
+            assertEquals("HQ", report.offices.single().officeName)
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `empty period reports no data and a null trend`() = runTest {
+        officeRepo.seed(Office(id = 1, name = "HQ", latitude = 1.0, longitude = 1.0, radiusMeters = 150f))
+
+        useCase(ReportPeriod.Week, offset = 0).test {
+            val report = awaitItem()
+
+            assertFalse(report.hasData)
+            assertEquals(Duration.ZERO, report.totalDuration)
+            assertNull(report.trendPercent)
+            assertEquals(7, report.bars.size)
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+
+    @Test
+    fun `monthly report buckets by week`() = runTest {
+        officeRepo.seed(Office(id = 1, name = "HQ", latitude = 1.0, longitude = 1.0, radiusMeters = 150f))
+        attendanceRepo.seed(
+            visit(1, 1, "2026-06-03T09:00:00Z", "2026-06-03T12:00:00Z"), // 3h in June
+        )
+
+        useCase(ReportPeriod.Month, offset = 0).test {
+            val report = awaitItem()
+
+            assertEquals(Duration.ofHours(3), report.totalDuration)
+            // June has 30 days → 5 weekly buckets.
+            assertEquals(5, report.bars.size)
+
+            cancelAndIgnoreRemainingEvents()
+        }
+    }
+}

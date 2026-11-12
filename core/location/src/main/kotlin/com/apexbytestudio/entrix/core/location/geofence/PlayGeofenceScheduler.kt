@@ -39,29 +39,32 @@ class PlayGeofenceScheduler(
     // Permission is intentionally not checked here: a missing permission throws SecurityException,
     // which runCatching turns into a failed Result for the caller to handle (e.g. prompt the user).
     @SuppressLint("MissingPermission")
-    override suspend fun register(office: Office): Result<Unit> {
+    override suspend fun registerAll(offices: List<Office>): Result<Unit> {
+        if (offices.isEmpty()) return clear()
         if (!isPlayServicesAvailable()) {
             return Result.failure(GeofenceUnavailableException("Google Play services are unavailable"))
         }
 
-        val geofence = Geofence.Builder()
-            .setRequestId(office.id.toString())
-            .setCircularRegion(office.latitude, office.longitude, office.radiusMeters)
-            .setTransitionTypes(
-                Geofence.GEOFENCE_TRANSITION_ENTER or
-                    Geofence.GEOFENCE_TRANSITION_DWELL or
-                    Geofence.GEOFENCE_TRANSITION_EXIT,
-            )
-            .setLoiteringDelay(GeofenceContract.LOITERING_DELAY_MILLIS)
-            .setExpirationDuration(Geofence.NEVER_EXPIRE)
-            .build()
+        val geofences = offices.map { office ->
+            Geofence.Builder()
+                .setRequestId(office.id.toString())
+                .setCircularRegion(office.latitude, office.longitude, office.radiusMeters)
+                .setTransitionTypes(
+                    Geofence.GEOFENCE_TRANSITION_ENTER or
+                        Geofence.GEOFENCE_TRANSITION_DWELL or
+                        Geofence.GEOFENCE_TRANSITION_EXIT,
+                )
+                .setLoiteringDelay(GeofenceContract.LOITERING_DELAY_MILLIS)
+                .setExpirationDuration(Geofence.NEVER_EXPIRE)
+                .build()
+        }
 
         val request = GeofencingRequest.Builder()
             // ENTER caches the entry time; DWELL opens a visit if the user is already inside at registration.
             .setInitialTrigger(
                 GeofencingRequest.INITIAL_TRIGGER_ENTER or GeofencingRequest.INITIAL_TRIGGER_DWELL,
             )
-            .addGeofence(geofence)
+            .addGeofences(geofences)
             .build()
 
         return runCatching {

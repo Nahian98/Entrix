@@ -54,27 +54,27 @@ class RecordGeofenceTransitionUseCase(
     private suspend fun onEnter(officeId: Long, occurredAt: Instant): TransitionOutcome {
         // Already inside, or an ENTER is already pending: keep the earliest known entry time.
         if (attendanceRepository.getOpenVisit(officeId) != null) return TransitionOutcome.Ignored
-        if (trackingStateRepository.getPendingEnterTime() != null) return TransitionOutcome.Ignored
+        if (trackingStateRepository.getPendingEnterTime(officeId) != null) return TransitionOutcome.Ignored
 
-        trackingStateRepository.setPendingEnterTime(occurredAt)
+        trackingStateRepository.setPendingEnterTime(officeId, occurredAt)
         return TransitionOutcome.EntryCached
     }
 
     private suspend fun onDwell(officeId: Long, occurredAt: Instant): TransitionOutcome {
         if (attendanceRepository.getOpenVisit(officeId) != null) return TransitionOutcome.Ignored
 
-        val enterTime = trackingStateRepository.getPendingEnterTime() ?: occurredAt
+        val enterTime = trackingStateRepository.getPendingEnterTime(officeId) ?: occurredAt
         attendanceRepository.openVisit(
             officeId = officeId,
             enterTime = enterTime,
             createdTime = occurredAt,
         )
-        trackingStateRepository.setPendingEnterTime(null)
+        trackingStateRepository.setPendingEnterTime(officeId, null)
         return TransitionOutcome.VisitOpened
     }
 
     private suspend fun onExit(officeId: Long, occurredAt: Instant): TransitionOutcome {
-        trackingStateRepository.setPendingEnterTime(null)
+        trackingStateRepository.setPendingEnterTime(officeId, null)
 
         val openVisit = attendanceRepository.getOpenVisit(officeId)
             ?: return TransitionOutcome.Ignored

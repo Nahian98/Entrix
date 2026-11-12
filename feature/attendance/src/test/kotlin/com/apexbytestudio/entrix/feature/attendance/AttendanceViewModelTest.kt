@@ -3,6 +3,7 @@ package com.apexbytestudio.entrix.feature.attendance
 import app.cash.turbine.test
 import com.apexbytestudio.entrix.core.model.Attendance
 import com.apexbytestudio.entrix.core.testing.MainDispatcherRule
+import com.apexbytestudio.entrix.domain.model.HistoryVisit
 import com.apexbytestudio.entrix.domain.usecase.DeleteAttendanceHistoryUseCase
 import com.apexbytestudio.entrix.domain.usecase.ObserveAttendanceHistoryUseCase
 import io.mockk.coVerify
@@ -31,8 +32,8 @@ class AttendanceViewModelTest {
         val yesterday = today.minus(1, ChronoUnit.DAYS)
         every { observeHistory() } returns flowOf(
             listOf(
-                Attendance(1, 1, today.minus(8, ChronoUnit.HOURS), today.minus(1, ChronoUnit.HOURS), today.minus(8, ChronoUnit.HOURS)),
-                Attendance(2, 1, yesterday.minus(8, ChronoUnit.HOURS), yesterday, yesterday.minus(8, ChronoUnit.HOURS)),
+                HistoryVisit(Attendance(1, 1, today.minus(8, ChronoUnit.HOURS), today.minus(1, ChronoUnit.HOURS), today.minus(8, ChronoUnit.HOURS)), "HQ"),
+                HistoryVisit(Attendance(2, 1, yesterday.minus(8, ChronoUnit.HOURS), yesterday, yesterday.minus(8, ChronoUnit.HOURS)), "HQ"),
             ),
         )
 

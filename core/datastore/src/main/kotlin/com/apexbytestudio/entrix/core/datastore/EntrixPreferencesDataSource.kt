@@ -25,18 +25,22 @@ class EntrixPreferencesDataSource(
         dataStore.edit { it[KEY_TRACKING_ENABLED] = enabled }
     }
 
-    suspend fun getPendingEnterMillis(): Long? =
-        dataStore.data.map { it[KEY_PENDING_ENTER_MILLIS] }.first()
+    suspend fun getPendingEnterMillis(officeId: Long): Long? =
+        dataStore.data.map { it[pendingEnterKey(officeId)] }.first()
 
-    suspend fun setPendingEnterMillis(millis: Long?) {
+    suspend fun setPendingEnterMillis(officeId: Long, millis: Long?) {
         dataStore.edit { prefs ->
-            if (millis == null) prefs.remove(KEY_PENDING_ENTER_MILLIS)
-            else prefs[KEY_PENDING_ENTER_MILLIS] = millis
+            val key = pendingEnterKey(officeId)
+            if (millis == null) prefs.remove(key)
+            else prefs[key] = millis
         }
     }
 
     private companion object {
         val KEY_TRACKING_ENABLED = booleanPreferencesKey("tracking_enabled")
-        val KEY_PENDING_ENTER_MILLIS = longPreferencesKey("pending_enter_millis")
+
+        // The pending (un-confirmed) entry time is kept per office so a pending ENTER at one office
+        // never blocks or is consumed by a DWELL at another.
+        fun pendingEnterKey(officeId: Long) = longPreferencesKey("pending_enter_millis_$officeId")
     }
 }

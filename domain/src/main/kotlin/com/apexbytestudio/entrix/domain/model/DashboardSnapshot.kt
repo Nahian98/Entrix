@@ -1,40 +1,42 @@
 package com.apexbytestudio.entrix.domain.model
 
-import com.apexbytestudio.entrix.core.model.Attendance
 import com.apexbytestudio.entrix.core.model.Office
 import java.time.Duration
 import java.time.Instant
 
 /**
- * Everything the dashboard needs in a single immutable snapshot. Derived values are exposed as
- * computed properties so the screen never re-implements the rules. Live "time since entry" for an
- * open visit is intentionally *not* here — that ticks in the presentation layer against `now`.
+ * Per-office status for the dashboard: whether the user is currently inside, and today's activity.
+ * Derived values are computed here so the screen never re-implements the rules.
+ */
+data class OfficeStatus(
+    val office: Office,
+    val isInside: Boolean,
+    val todayFirstEnter: Instant?,
+    val todayLastExit: Instant?,
+    /** Sum of completed visit durations at this office today (the open visit is excluded). */
+    val todayCompletedDuration: Duration,
+)
+
+/**
+ * Everything the dashboard needs in a single immutable snapshot. One [OfficeStatus] per configured
+ * office, plus aggregates across all offices. Live "time since entry" for an open visit is
+ * intentionally *not* here — that ticks in the presentation layer against `now`.
  */
 data class DashboardSnapshot(
-    val office: Office?,
-    val openVisit: Attendance?,
-    val todayVisits: List<Attendance>,
+    val offices: List<OfficeStatus>,
     val trackingEnabled: Boolean,
 ) {
-    val isOfficeConfigured: Boolean get() = office != null
+    val isOfficeConfigured: Boolean get() = offices.isNotEmpty()
 
-    val isInsideOffice: Boolean get() = openVisit != null
+    val isInsideAnyOffice: Boolean get() = offices.any { it.isInside }
 
-    val todayFirstEnter: Instant? get() = todayVisits.minByOrNull { it.enterTime }?.enterTime
-
-    val todayLastExit: Instant? get() = todayVisits.mapNotNull { it.exitTime }.maxOrNull()
-
-    /** Sum of completed visit durations today. The currently open visit is excluded. */
-    val todayCompletedDuration: Duration
-        get() = todayVisits.fold(Duration.ZERO) { acc, visit ->
-            acc + (visit.duration ?: Duration.ZERO)
-        }
+    /** Combined completed duration across every office today. */
+    val todayTotalDuration: Duration
+        get() = offices.fold(Duration.ZERO) { acc, status -> acc + status.todayCompletedDuration }
 
     companion object {
         val Empty = DashboardSnapshot(
-            office = null,
-            openVisit = null,
-            todayVisits = emptyList(),
+            offices = emptyList(),
             trackingEnabled = false,
         )
     }

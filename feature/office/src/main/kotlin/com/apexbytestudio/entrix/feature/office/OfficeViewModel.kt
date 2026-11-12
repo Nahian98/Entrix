@@ -15,32 +15,36 @@ import kotlinx.coroutines.flow.receiveAsFlow
 import kotlinx.coroutines.flow.update
 import kotlinx.coroutines.launch
 
+/**
+ * Backs the add/edit office form. [officeId] is [Office.NO_ID] when adding a new office; otherwise
+ * the existing office is loaded once to seed the form.
+ */
 class OfficeViewModel(
-    private val observeOffice: ObserveOfficeUseCase,
+    private val officeId: Long,
+    observeOffice: ObserveOfficeUseCase,
     private val saveOffice: SaveOfficeUseCase,
     private val syncGeofences: SyncGeofencesUseCase,
     private val getCurrentLocation: GetCurrentLocationUseCase,
 ) : ViewModel() {
 
-    private var officeId: Long = Office.NO_ID
-
-    private val _uiState = MutableStateFlow(OfficeUiState())
+    private val _uiState = MutableStateFlow(OfficeUiState(isEditing = officeId != Office.NO_ID))
     val uiState = _uiState.asStateFlow()
 
     private val _events = Channel<OfficeEvent>(Channel.BUFFERED)
     val events = _events.receiveAsFlow()
 
     init {
-        viewModelScope.launch {
-            observeOffice().first()?.let { office ->
-                officeId = office.id
-                _uiState.update {
-                    it.copy(
-                        name = office.name,
-                        latitude = office.latitude.toCoordinateString(),
-                        longitude = office.longitude.toCoordinateString(),
-                        radiusMeters = office.radiusMeters,
-                    )
+        if (officeId != Office.NO_ID) {
+            viewModelScope.launch {
+                observeOffice(officeId).first()?.let { office ->
+                    _uiState.update {
+                        it.copy(
+                            name = office.name,
+                            latitude = office.latitude.toCoordinateString(),
+                            longitude = office.longitude.toCoordinateString(),
+                            radiusMeters = office.radiusMeters,
+                        )
+                    }
                 }
             }
         }
@@ -98,8 +102,7 @@ class OfficeViewModel(
                 radiusMeters = state.radiusMeters,
             )
             saveOffice(office)
-                .onSuccess { saved ->
-                    officeId = saved.id
+                .onSuccess {
                     syncGeofences()
                     _uiState.update { it.copy(isSaving = false) }
                     _events.send(OfficeEvent.Saved)

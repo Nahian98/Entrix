@@ -32,12 +32,14 @@ import com.apexbytestudio.entrix.core.designsystem.component.EntrixButton
 import com.apexbytestudio.entrix.core.designsystem.component.EntrixOutlinedButton
 import com.apexbytestudio.entrix.core.designsystem.theme.EntrixSpacing
 import org.koin.androidx.compose.koinViewModel
+import org.koin.core.parameter.parametersOf
 
 @Composable
 fun OfficeScreen(
+    officeId: Long,
     onSaved: () -> Unit,
     modifier: Modifier = Modifier,
-    viewModel: OfficeViewModel = koinViewModel(),
+    viewModel: OfficeViewModel = koinViewModel { parametersOf(officeId) },
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     val context = LocalContext.current

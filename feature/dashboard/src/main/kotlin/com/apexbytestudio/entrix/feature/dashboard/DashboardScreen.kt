@@ -26,7 +26,7 @@ import com.apexbytestudio.entrix.core.designsystem.theme.EntrixTheme
 @Composable
 fun DashboardScreen(
     uiState: DashboardUiState,
-    onEditOffice: () -> Unit,
+    onManageOffices: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     when {
@@ -35,17 +35,17 @@ fun DashboardScreen(
             title = "No office configured",
             description = "Set up your office location to start tracking attendance automatically.",
             modifier = modifier,
-            action = { EntrixButton(text = "Set up office", onClick = onEditOffice) },
+            action = { EntrixButton(text = "Set up office", onClick = onManageOffices) },
         )
 
-        else -> DashboardContent(uiState = uiState, onEditOffice = onEditOffice, modifier = modifier)
+        else -> DashboardContent(uiState = uiState, onManageOffices = onManageOffices, modifier = modifier)
     }
 }
 
 @Composable
 private fun DashboardContent(
     uiState: DashboardUiState,
-    onEditOffice: () -> Unit,
+    onManageOffices: () -> Unit,
     modifier: Modifier = Modifier,
 ) {
     Column(
@@ -55,56 +55,48 @@ private fun DashboardContent(
             .padding(EntrixSpacing.md),
         verticalArrangement = Arrangement.spacedBy(EntrixSpacing.md),
     ) {
-        StatusCard(insideOffice = uiState.insideOffice, officeName = uiState.officeName)
-        TodayCard(
-            enter = uiState.todayEnter,
-            exit = uiState.todayExit,
-            duration = uiState.todayDuration,
-        )
-        TrackingCard(enabled = uiState.trackingEnabled)
-        EntrixOutlinedButton(text = "Edit office", onClick = onEditOffice)
+        uiState.offices.forEach { office ->
+            OfficeStatusCard(office)
+        }
+        TotalsCard(total = uiState.todayTotal, trackingEnabled = uiState.trackingEnabled)
+        EntrixOutlinedButton(text = "Manage offices", onClick = onManageOffices)
     }
 }
 
 @Composable
-private fun StatusCard(insideOffice: Boolean, officeName: String?) {
+private fun OfficeStatusCard(office: DashboardOfficeUi) {
     EntrixCard {
-        Text(
-            text = if (insideOffice) "Inside office" else "Outside office",
-            style = MaterialTheme.typography.headlineSmall,
-            fontWeight = FontWeight.SemiBold,
-        )
-        if (officeName != null) {
+        Row(
+            modifier = Modifier.fillMaxWidth(),
+            horizontalArrangement = Arrangement.SpaceBetween,
+            verticalAlignment = Alignment.CenterVertically,
+        ) {
             Text(
-                text = officeName,
-                style = MaterialTheme.typography.bodyMedium,
-                color = MaterialTheme.colorScheme.onSurfaceVariant,
+                text = office.name,
+                style = MaterialTheme.typography.titleMedium,
+                fontWeight = FontWeight.SemiBold,
+            )
+            Text(
+                text = if (office.insideOffice) "Inside" else "Outside",
+                style = MaterialTheme.typography.labelLarge,
+                color = if (office.insideOffice) {
+                    MaterialTheme.colorScheme.primary
+                } else {
+                    MaterialTheme.colorScheme.onSurfaceVariant
+                },
             )
         }
+        LabeledValue(label = "Entry", value = office.todayEnter ?: "—")
+        LabeledValue(label = "Exit", value = office.todayExit ?: "—")
+        LabeledValue(label = "Today", value = office.todayDuration ?: "—")
     }
 }
 
 @Composable
-private fun TodayCard(enter: String?, exit: String?, duration: String?) {
+private fun TotalsCard(total: String?, trackingEnabled: Boolean) {
     EntrixCard {
-        Text(
-            text = "Today",
-            style = MaterialTheme.typography.titleMedium,
-            modifier = Modifier.padding(bottom = EntrixSpacing.sm),
-        )
-        LabeledValue(label = "Entry", value = enter ?: "—")
-        LabeledValue(label = "Exit", value = exit ?: "—")
-        LabeledValue(label = "Duration", value = duration ?: "—")
-    }
-}
-
-@Composable
-private fun TrackingCard(enabled: Boolean) {
-    EntrixCard {
-        LabeledValue(
-            label = "Tracking",
-            value = if (enabled) "Enabled" else "Disabled",
-        )
+        LabeledValue(label = "Today, all offices", value = total ?: "—")
+        LabeledValue(label = "Tracking", value = if (trackingEnabled) "Enabled" else "Disabled")
     }
 }
 
@@ -138,14 +130,15 @@ private fun DashboardContentPreview() {
             uiState = DashboardUiState(
                 isLoading = false,
                 officeConfigured = true,
-                officeName = "HQ",
-                insideOffice = true,
                 trackingEnabled = true,
-                todayEnter = "08:02",
-                todayExit = null,
-                todayDuration = "1h 30m",
+                insideAnyOffice = true,
+                todayTotal = "6h 10m",
+                offices = listOf(
+                    DashboardOfficeUi(1, "HQ", true, "08:02", null, "1h 30m"),
+                    DashboardOfficeUi(2, "Client site", false, "13:00", "16:40", "3h 40m"),
+                ),
             ),
-            onEditOffice = {},
+            onManageOffices = {},
         )
     }
 }

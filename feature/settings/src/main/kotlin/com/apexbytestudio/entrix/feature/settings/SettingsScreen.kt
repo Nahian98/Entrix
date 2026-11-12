@@ -44,7 +44,7 @@ private const val GITHUB_URL = "https://github.com/Nahian98/Entrix"
 
 @Composable
 fun SettingsScreen(
-    onEditOffice: () -> Unit,
+    onManageOffices: () -> Unit,
     modifier: Modifier = Modifier,
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
@@ -89,9 +89,9 @@ fun SettingsScreen(
             )
             HorizontalDivider()
             SettingRow(
-                title = "Office location",
-                subtitle = "Edit the tracked office",
-                trailing = { TextButton(onClick = onEditOffice) { Text("Edit") } },
+                title = "Offices",
+                subtitle = "Add, edit or remove tracked offices",
+                trailing = { TextButton(onClick = onManageOffices) { Text("Manage") } },
             )
         }
 

@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="utf-8"?>
+<paths>
+    <!-- Exported timesheets live in cacheDir/exports and are shared read-only via FileProvider. -->
+    <cache-path
+        name="exports"
+        path="exports/" />
+</paths>

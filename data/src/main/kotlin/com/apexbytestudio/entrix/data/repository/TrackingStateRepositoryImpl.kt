@@ -16,9 +16,9 @@ class TrackingStateRepositoryImpl(
     override suspend fun setTrackingEnabled(enabled: Boolean) =
         preferences.setTrackingEnabled(enabled)
 
-    override suspend fun getPendingEnterTime(): Instant? =
-        preferences.getPendingEnterMillis()?.let(Instant::ofEpochMilli)
+    override suspend fun getPendingEnterTime(officeId: Long): Instant? =
+        preferences.getPendingEnterMillis(officeId)?.let(Instant::ofEpochMilli)
 
-    override suspend fun setPendingEnterTime(time: Instant?) =
-        preferences.setPendingEnterMillis(time?.toEpochMilli())
+    override suspend fun setPendingEnterTime(officeId: Long, time: Instant?) =
+        preferences.setPendingEnterMillis(officeId, time?.toEpochMilli())
 }

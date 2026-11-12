@@ -27,7 +27,7 @@ class RecordGeofenceTransitionUseCaseTest {
         val outcome = useCase(officeId, GeofenceTransition.Enter, t0)
 
         assertEquals(TransitionOutcome.EntryCached, outcome)
-        assertEquals(t0, tracking.getPendingEnterTime())
+        assertEquals(t0, tracking.getPendingEnterTime(officeId))
         assertTrue(attendance.current().isEmpty())
     }
 
@@ -41,7 +41,7 @@ class RecordGeofenceTransitionUseCaseTest {
         val open = attendance.getOpenVisit(officeId)!!
         assertEquals(t0, open.enterTime) // back-dated, not t1
         assertEquals(t1, open.createdTime)
-        assertNull(tracking.getPendingEnterTime()) // cache cleared
+        assertNull(tracking.getPendingEnterTime(officeId)) // cache cleared
     }
 
     @Test
@@ -73,7 +73,7 @@ class RecordGeofenceTransitionUseCaseTest {
 
         assertEquals(TransitionOutcome.Ignored, outcome)
         assertTrue(attendance.current().isEmpty())
-        assertNull(tracking.getPendingEnterTime())
+        assertNull(tracking.getPendingEnterTime(officeId))
     }
 
     @Test
@@ -91,7 +91,7 @@ class RecordGeofenceTransitionUseCaseTest {
         val outcome = useCase(officeId, GeofenceTransition.Enter, t0.plusSeconds(60))
 
         assertEquals(TransitionOutcome.Ignored, outcome)
-        assertEquals(t0, tracking.getPendingEnterTime())
+        assertEquals(t0, tracking.getPendingEnterTime(officeId))
     }
 
     @Test
@@ -102,7 +102,7 @@ class RecordGeofenceTransitionUseCaseTest {
         val outcome = useCase(officeId, GeofenceTransition.Enter, t1)
 
         assertEquals(TransitionOutcome.Ignored, outcome)
-        assertNull(tracking.getPendingEnterTime())
+        assertNull(tracking.getPendingEnterTime(officeId))
     }
 
     @Test
@@ -114,12 +114,27 @@ class RecordGeofenceTransitionUseCaseTest {
     }
 
     @Test
+    fun `a pending enter at one office does not leak into another`() = runTest {
+        val other = 99L
+
+        // Office A gets a pending ENTER; office B then DWELLs and must use its own (dwell) time,
+        // not A's cached time, and A's pending time must survive.
+        useCase(officeId, GeofenceTransition.Enter, t0)
+        val outcome = useCase(other, GeofenceTransition.Dwell, t1)
+
+        assertEquals(TransitionOutcome.VisitOpened, outcome)
+        assertEquals(t1, attendance.getOpenVisit(other)!!.enterTime)
+        assertNull(attendance.getOpenVisit(officeId))
+        assertEquals(t0, tracking.getPendingEnterTime(officeId))
+    }
+
+    @Test
     fun `transitions are ignored when tracking is disabled`() = runTest {
         tracking.setTrackingEnabled(false)
 
         assertEquals(TransitionOutcome.Ignored, useCase(officeId, GeofenceTransition.Enter, t0))
         assertEquals(TransitionOutcome.Ignored, useCase(officeId, GeofenceTransition.Dwell, t1))
         assertTrue(attendance.current().isEmpty())
-        assertNull(tracking.getPendingEnterTime())
+        assertNull(tracking.getPendingEnterTime(officeId))
     }
 }

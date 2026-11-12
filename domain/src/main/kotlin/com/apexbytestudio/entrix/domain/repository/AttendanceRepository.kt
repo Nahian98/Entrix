@@ -13,8 +13,14 @@ interface AttendanceRepository {
     /** Full history, newest first. */
     fun observeHistory(): Flow<List<Attendance>>
 
+    /** One-shot full history, newest first — used by exports/reports that don't need a stream. */
+    suspend fun getHistory(): List<Attendance>
+
     /** The currently open visit (entered, not yet exited), or `null` when outside. */
     fun observeOpenVisit(): Flow<Attendance?>
+
+    /** All currently open visits — at most one per office. Empty when outside every office. */
+    fun observeOpenVisits(): Flow<List<Attendance>>
 
     suspend fun getOpenVisit(officeId: Long): Attendance?
 

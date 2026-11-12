@@ -4,12 +4,14 @@ import android.app.Application
 import android.content.Context
 import androidx.datastore.core.DataStore
 import com.apexbytestudio.entrix.core.common.di.coroutinesModule
+import com.apexbytestudio.entrix.core.export.di.exportModule
 import com.apexbytestudio.entrix.core.location.di.locationModule
 import com.apexbytestudio.entrix.data.di.dataModule
 import com.apexbytestudio.entrix.domain.di.domainModule
 import com.apexbytestudio.entrix.feature.attendance.di.attendanceModule
 import com.apexbytestudio.entrix.feature.dashboard.di.dashboardModule
 import com.apexbytestudio.entrix.feature.office.di.officeModule
+import com.apexbytestudio.entrix.feature.reports.di.reportsModule
 import com.apexbytestudio.entrix.feature.settings.di.settingsModule
 import org.junit.Test
 import org.koin.core.annotation.KoinExperimentalAPI
@@ -33,9 +35,11 @@ class KoinGraphTest {
                 domainModule,
                 dataModule,
                 locationModule,
+                exportModule,
                 dashboardModule,
                 attendanceModule,
                 officeModule,
+                reportsModule,
                 settingsModule,
             )
         }.verify(

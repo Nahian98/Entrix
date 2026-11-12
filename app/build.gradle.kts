@@ -57,6 +57,7 @@ dependencies {
     implementation(project(":feature:dashboard"))
     implementation(project(":feature:attendance"))
     implementation(project(":feature:office"))
+    implementation(project(":feature:reports"))
     implementation(project(":feature:settings"))
 
     // Wiring (DI graph is assembled here)
@@ -65,6 +66,7 @@ dependencies {
     implementation(project(":core:common"))
     implementation(project(":core:model"))
     implementation(project(":core:location"))
+    implementation(project(":core:export"))
     implementation(project(":core:designsystem"))
     implementation(project(":core:navigation"))
 

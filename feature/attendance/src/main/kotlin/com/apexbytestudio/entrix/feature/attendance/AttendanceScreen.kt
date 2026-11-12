@@ -96,6 +96,12 @@ fun AttendanceScreen(
 @Composable
 private fun VisitCard(visit: AttendanceVisitUi) {
     EntrixCard {
+        Text(
+            text = visit.officeName,
+            style = MaterialTheme.typography.titleSmall,
+            fontWeight = FontWeight.SemiBold,
+            modifier = Modifier.padding(bottom = EntrixSpacing.xs),
+        )
         Row(
             modifier = Modifier.fillMaxWidth(),
             horizontalArrangement = Arrangement.SpaceBetween,
