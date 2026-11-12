@@ -2,7 +2,7 @@
 
 **Automatic Place & Attendance Tracker**
 
-Entrix is a privacy-first Android app that automatically records when you enter and leave your offices using the Android Geofencing API — then turns those visits into history, reports and shareable PDF timesheets. No account, no cloud, no analytics, no ads. Everything stays on the device.
+Entrix is a privacy-first Android app that automatically records when you enter and leave your offices using the Android Geofencing API — then turns those visits into history, reports and shareable PDF timesheets. No account, no analytics, no ads, and your attendance data never leaves the device. The only online touchpoint is the optional Google Maps picker used when setting up an office.
 
 [![CI](https://github.com/Nahian98/Entrix-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/Nahian98/Entrix-pro/actions/workflows/ci.yml)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?logo=kotlin&logoColor=white)
@@ -22,12 +22,13 @@ Most attendance apps want a login, a server, and your data. Entrix is the opposi
 ## Features
 
 - 📍 Track **multiple offices**, each with its own location and geofence radius
+- 🗺️ **Map location picker** — search an address or tap the map to drop a pin and size the geofence, with a full-screen map for fine-tuning (Google Maps)
 - 🟢 Automatic, battery-friendly **entry / exit detection** via geofencing (no continuous polling, no foreground service)
 - 🕓 Local attendance history, grouped by day and labelled per office
 - 📊 **Weekly & monthly reports** — totals, days present, per-office breakdown, a bar chart, and trend vs. the previous period
 - 📄 **Export timesheets to PDF** and share them — generated on-device, no third-party libraries
 - 🗑️ Delete an office without losing its data — offices are **archived**, so past history and timesheets stay intact
-- 🔒 100% local — no account, no network, no tracking
+- 🔒 Private by default — no account, no analytics, no ads; attendance data never leaves the device
 - 🎨 Material 3 UI with dynamic color, light/dark themes
 - 🔁 Geofences automatically restored after device reboot
 
@@ -97,7 +98,7 @@ Key rule: **`:domain` and `:core:model` are pure Kotlin/JVM modules** — they c
 | `:app` | app | Application, Koin start-up, navigation host, theme entry, composition root |
 | `:feature:dashboard` | android-lib | Per-office status + today's totals |
 | `:feature:attendance` | android-lib | History list, grouped by day and labelled per office; delete |
-| `:feature:office` | android-lib | Manage offices — list, add/edit, archive (location + radius) |
+| `:feature:office` | android-lib | Manage offices — list, add/edit (map picker + search), archive |
 | `:feature:reports` | android-lib | Weekly/monthly reports, bar chart, PDF export |
 | `:feature:settings` | android-lib | Tracking toggle, permissions, battery, about |
 | `:domain` | **JVM** | Entities-adjacent models, repository interfaces, use cases |
@@ -108,7 +109,7 @@ Key rule: **`:domain` and `:core:model` are pure Kotlin/JVM modules** — they c
 | `:core:navigation` | android-lib | Type-safe navigation routes |
 | `:core:database` | android-lib | Room database, DAOs, entities (schema exported, migrated) |
 | `:core:datastore` | android-lib | Preferences DataStore |
-| `:core:location` | android-lib | Geofencing client, broadcast receivers, fused location |
+| `:core:location` | android-lib | Geofencing, broadcast receivers, fused location, location search (Geocoding) |
 | `:core:export` | android-lib | Offline PDF timesheet rendering (framework `PdfDocument`) |
 
 ---
@@ -122,6 +123,7 @@ Key rule: **`:domain` and `:core:model` are pure Kotlin/JVM modules** — they c
 | DI | **Koin** |
 | Persistence | Room (single source of truth, versioned migrations) + DataStore |
 | Location | Android Geofencing API + Fused Location Provider |
+| Maps & search | Maps SDK for Android (`maps-compose`) + Google Geocoding web service |
 | Reporting | On-device PDF via `android.graphics.pdf.PdfDocument`, shared through `FileProvider` |
 | Build | Gradle Kotlin DSL, Version Catalog, **`build-logic` convention plugins** |
 | Testing | JUnit, Coroutines Test, Turbine, MockK, Room `MigrationTestHelper` |
@@ -131,7 +133,7 @@ Key rule: **`:domain` and `:core:model` are pure Kotlin/JVM modules** — they c
 - **Convention plugins (`build-logic/`)** — every module's build script is a few lines; shared config (`compileSdk`, Compose, Room, feature wiring) lives in `entrix.android.*` / `entrix.jvm.library` plugins. No copy-pasted Gradle.
 - **Pure-JVM domain** — framework independence enforced by the module boundary, not just convention.
 - **Single source of truth** — Room exposes `Flow`; the UI derives immutable state from it.
-- **Privacy by construction** — no networking dependency exists anywhere in the graph.
+- **Privacy by default** — attendance data never leaves the device; the only network use is the Google Maps picker and geocoding search at office setup, isolated in `:core:location`.
 
 ---
 
@@ -149,7 +151,7 @@ A visit is only created once the user has **dwelled** (~2 min) inside the region
 
 Geofences are re-registered on boot, transitions are handled in a `BroadcastReceiver` via `goAsync()` (no foreground service), and Google Play Services availability and permission revocation are handled gracefully.
 
-> **Note on the location picker:** the office is selected via *"use my current location"* + editable coordinates + a radius slider, behind an abstraction. A Google Maps SDK picker can be slotted in without touching the domain or data layers — it was kept optional to keep the app free of a billing-gated API key and true to its zero-cloud ethos.
+> **Location picker:** offices are placed on an interactive **Google Map** — search an address (Geocoding, region-biased) or tap to drop the pin, with the geofence shown as a radius circle and a full-screen map for fine-tuning. It sits behind a domain abstraction (`LocationSearcher`), so the `:domain`/`:data` layers never see the Maps SDK; "use my current location" + manual coordinate entry remain as the offline fallback. The Maps API key is read from a git-ignored `local.properties` and never committed.
 
 ---
 
@@ -165,11 +167,17 @@ Requirements: **JDK 17+** (the build targets Java 17; Android Studio's bundled J
 ./gradlew installDebug           # install on a connected device/emulator
 ```
 
-No API keys or `local.properties` secrets are required to build or run.
+The project builds with **no secrets** — without a Maps key the app runs fine and the picker map just renders blank. To enable the map picker, add your key to `local.properties` (git-ignored):
+
+```
+MAPS_API_KEY=AIza...
+```
+
+The key needs the **Maps SDK for Android** and **Geocoding API** enabled and added to its restrictions (both within Google's free tier). Restrict it to your package + signing SHA-1.
 
 ## Testing
 
-- **54 JVM unit tests** across the domain, data and feature modules — including full coverage of the geofence reconciliation policy, multi-office dashboard/report aggregation, PDF timesheet assembly, office validation, ViewModels, and persistence mappers.
+- **56 JVM unit tests** across the domain, data and feature modules — including the geofence reconciliation policy, multi-office dashboard/report aggregation, PDF timesheet assembly, office validation & location search, ViewModels, and persistence mappers.
 - **Instrumented Room tests** — DAO open/close + foreign-key cascade, and a **v1→v2 migration test** verifying the `archived` column is added without losing data — run on a device with `./gradlew connectedDebugAndroidTest`.
 - Room validates all DAO SQL **at compile time** via KSP; the schema is exported to `core/database/schemas/` and migrations are tested against it.
 - A `KoinGraphTest` statically `verify()`s the full DI graph, catching missing bindings at build time.
@@ -186,10 +194,11 @@ Delivered:
 - [x] Release hardening (R8/minify, resource shrinking, ProGuard rules, release signing)
 - [x] CI (GitHub Actions: build + tests + lint) and a Koin graph `verify()` check
 - [x] Screenshots (light & dark)
+- [x] Map location picker with address search
 
 Planned:
 
-- [ ] Optional Google Maps picker
+- [ ] Google Places type-ahead autocomplete (nicer search; metered API)
 - [ ] Future ideas (kept architecturally open): home-screen widgets, backup/restore, Wear OS, localization
 
 ## License
