@@ -135,6 +135,36 @@ object EntrixIcons {
         }
     }
 
+    /** Solid circle with a check cut out: "done / all good". */
+    val CheckCircle: ImageVector by lazy {
+        icon("CheckCircle") {
+            fillPath(PathFillType.EvenOdd) {
+                circle(12f, 12f, 9.25f)
+                // Check mark cut out as the outline of a 1.5-wide stroke along
+                // (7.75,12.25) → (10.5,15) → (16.25,9.25), with round end caps.
+                moveTo(7.22f, 12.78f)
+                lineTo(10.5f, 16.06f)
+                lineTo(16.78f, 9.78f)
+                arcTo(0.75f, 0.75f, 0f, false, false, 15.72f, 8.72f)
+                lineTo(10.5f, 13.94f)
+                lineTo(8.28f, 11.72f)
+                arcTo(0.75f, 0.75f, 0f, false, false, 7.22f, 12.78f)
+                close()
+            }
+        }
+    }
+
+    /** Circle outline with an exclamation mark: "needs your attention". */
+    val Alert: ImageVector by lazy {
+        icon("Alert") {
+            strokePath {
+                circle(12f, 12f, 8.5f)
+                moveTo(12f, 7.75f); verticalLineTo(12.75f)
+            }
+            fillPath { circle(12f, 16.1f, 1.05f) }
+        }
+    }
+
     /** Vertical ellipsis, for an overflow menu of secondary actions. */
     val More: ImageVector by lazy {
         icon("More") {
