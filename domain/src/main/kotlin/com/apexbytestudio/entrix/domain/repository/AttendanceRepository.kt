@@ -29,6 +29,12 @@ interface AttendanceRepository {
 
     suspend fun closeVisit(id: Long, exitTime: Instant)
 
+    /** The most recent visit (open or closed) at [officeId], by entry time; `null` if none. */
+    suspend fun getLatestVisit(officeId: Long): Attendance?
+
+    /** Clears a visit's exit time, turning it back into the open visit (exit grace period). */
+    suspend fun reopenVisit(id: Long)
+
     /** Deletes a single record by id (per-record delete / correction). */
     suspend fun deleteVisit(id: Long)
 

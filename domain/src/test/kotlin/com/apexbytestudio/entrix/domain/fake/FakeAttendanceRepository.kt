@@ -44,6 +44,13 @@ class FakeAttendanceRepository : AttendanceRepository {
         }
     }
 
+    override suspend fun getLatestVisit(officeId: Long): Attendance? =
+        records.value.filter { it.officeId == officeId }.maxByOrNull { it.enterTime }
+
+    override suspend fun reopenVisit(id: Long) {
+        records.value = records.value.map { if (it.id == id) it.copy(exitTime = null) else it }
+    }
+
     override suspend fun deleteVisit(id: Long) {
         records.value = records.value.filterNot { it.id == id }
     }

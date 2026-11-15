@@ -4,11 +4,13 @@ import com.apexbytestudio.entrix.core.model.Attendance
 import com.apexbytestudio.entrix.core.model.GeofenceTransition
 import com.apexbytestudio.entrix.domain.fake.FakeAttendanceRepository
 import com.apexbytestudio.entrix.domain.fake.FakeTrackingStateRepository
+import com.apexbytestudio.entrix.domain.model.AttendanceRules
 import kotlinx.coroutines.test.runTest
 import org.junit.Assert.assertEquals
 import org.junit.Assert.assertNull
 import org.junit.Assert.assertTrue
 import org.junit.Test
+import java.time.Duration
 import java.time.Instant
 
 class RecordGeofenceTransitionUseCaseTest {
@@ -136,5 +138,101 @@ class RecordGeofenceTransitionUseCaseTest {
         assertEquals(TransitionOutcome.Ignored, useCase(officeId, GeofenceTransition.Dwell, t1))
         assertTrue(attendance.current().isEmpty())
         assertNull(tracking.getPendingEnterTime(officeId))
+    }
+
+    // ---- exit grace period ----
+
+    /** A visit that was open from t0 and closed (possibly falsely) at [exit]. */
+    private fun seedClosedVisit(exit: Instant, enter: Instant = t0) = attendance.seed(
+        Attendance(id = 7, officeId = officeId, enterTime = enter, exitTime = exit, createdTime = t1),
+    )
+
+    @Test
+    fun `false exit then enter within the grace period reopens the same visit`() = runTest {
+        // Real-device case: EXIT from a coarse fix, ENTER 12 seconds later, user never left.
+        useCase(officeId, GeofenceTransition.Enter, t0)
+        useCase(officeId, GeofenceTransition.Dwell, t1)
+        val falseExit = Instant.parse("2026-06-28T15:53:46Z")
+        useCase(officeId, GeofenceTransition.Exit, falseExit)
+
+        val outcome = useCase(officeId, GeofenceTransition.Enter, falseExit.plusSeconds(12))
+
+        assertEquals(TransitionOutcome.VisitReopened, outcome)
+        val visit = attendance.current().single() // no second record
+        assertNull(visit.exitTime)
+        assertEquals(t0, visit.enterTime) // original check-in kept
+        assertNull(tracking.getPendingEnterTime(officeId))
+    }
+
+    @Test
+    fun `dwell within the grace period also reopens`() = runTest {
+        seedClosedVisit(exit = t2)
+
+        val outcome = useCase(officeId, GeofenceTransition.Dwell, t2.plus(Duration.ofMinutes(3)))
+
+        assertEquals(TransitionOutcome.VisitReopened, outcome)
+        assertEquals(1, attendance.current().size)
+        assertNull(attendance.current().single().exitTime)
+    }
+
+    @Test
+    fun `re-entry exactly at the end of the grace period still reopens`() = runTest {
+        seedClosedVisit(exit = t2)
+
+        val outcome = useCase(officeId, GeofenceTransition.Enter, t2.plus(AttendanceRules.EXIT_GRACE_PERIOD))
+
+        assertEquals(TransitionOutcome.VisitReopened, outcome)
+    }
+
+    @Test
+    fun `re-entry after the grace period starts a new visit as usual`() = runTest {
+        seedClosedVisit(exit = t2)
+        val later = t2.plus(AttendanceRules.EXIT_GRACE_PERIOD).plusSeconds(1)
+
+        val outcome = useCase(officeId, GeofenceTransition.Enter, later)
+
+        assertEquals(TransitionOutcome.EntryCached, outcome)
+        assertEquals(t2, attendance.current().single().exitTime) // old visit stays closed
+        assertEquals(later, tracking.getPendingEnterTime(officeId))
+    }
+
+    @Test
+    fun `boundary flapping keeps a single open visit`() = runTest {
+        useCase(officeId, GeofenceTransition.Dwell, t1)
+        var at = t2
+        repeat(4) {
+            useCase(officeId, GeofenceTransition.Exit, at)
+            at = at.plusSeconds(20)
+            useCase(officeId, GeofenceTransition.Enter, at)
+            at = at.plusSeconds(40)
+        }
+
+        val visit = attendance.current().single()
+        assertNull(visit.exitTime)
+        assertEquals(t1, visit.enterTime)
+    }
+
+    @Test
+    fun `a capped stale visit is never reopened`() = runTest {
+        // Closed by the 16h cap: duration == MAX_VISIT_DURATION, flagged for review.
+        val cappedExit = t0.plus(AttendanceRules.MAX_VISIT_DURATION)
+        seedClosedVisit(exit = cappedExit)
+
+        val outcome = useCase(officeId, GeofenceTransition.Enter, cappedExit.plusSeconds(30))
+
+        assertEquals(TransitionOutcome.EntryCached, outcome)
+        assertEquals(cappedExit, attendance.current().single().exitTime)
+    }
+
+    @Test
+    fun `a recent exit at another office does not reopen anything here`() = runTest {
+        attendance.seed(
+            Attendance(id = 7, officeId = 99L, enterTime = t0, exitTime = t2, createdTime = t1),
+        )
+
+        val outcome = useCase(officeId, GeofenceTransition.Enter, t2.plusSeconds(30))
+
+        assertEquals(TransitionOutcome.EntryCached, outcome)
+        assertEquals(t2, attendance.current().single().exitTime)
     }
 }

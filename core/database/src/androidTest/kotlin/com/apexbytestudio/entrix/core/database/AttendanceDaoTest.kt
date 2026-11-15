@@ -79,6 +79,31 @@ class AttendanceDaoTest {
         assertEquals(0, attendanceDao.observeHistory().first().size)
     }
 
+    @Test
+    fun latestVisitIsPerOfficeAndReopenClearsExit() = runTest {
+        val hq = officeDao.upsert(office())
+        val other = officeDao.upsert(office().copy(name = "Client"))
+        attendanceDao.insert(
+            AttendanceEntity(officeId = hq, enterTime = 1_000, exitTime = 2_000, createdTime = 1_000),
+        )
+        val latestHq = attendanceDao.insert(
+            AttendanceEntity(officeId = hq, enterTime = 3_000, exitTime = 4_000, createdTime = 3_000),
+        )
+        attendanceDao.insert(
+            AttendanceEntity(officeId = other, enterTime = 5_000, exitTime = 6_000, createdTime = 5_000),
+        )
+
+        assertEquals(latestHq, attendanceDao.getLatestVisit(hq)?.id)
+
+        attendanceDao.reopenVisit(latestHq)
+
+        val reopened = attendanceDao.getOpenVisit(hq)
+        assertEquals(latestHq, reopened?.id)
+        assertNull(reopened?.exitTime)
+        assertEquals(3_000L, reopened?.enterTime) // original entry kept
+        assertNull(attendanceDao.getOpenVisit(other)) // other office untouched
+    }
+
     private fun office() = OfficeEntity(
         name = "HQ",
         latitude = 52.52,
