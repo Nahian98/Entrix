@@ -395,7 +395,7 @@ private fun ReportsContentPreview() {
     }
 }
 
-/** Explains why a visit happening right now isn't in the numbers yet. */
+/** Explains that a visit happening right now is counted with its time so far. */
 @Composable
 private fun InProgressNote() {
     Row(verticalAlignment = Alignment.CenterVertically) {
@@ -407,7 +407,7 @@ private fun InProgressNote() {
         )
         Spacer(Modifier.width(EntrixSpacing.sm))
         Text(
-            text = "Your visit in progress is added when you leave.",
+            text = "Includes your visit in progress, up to now.",
             style = MaterialTheme.typography.bodySmall,
             color = MaterialTheme.colorScheme.onSurfaceVariant,
         )

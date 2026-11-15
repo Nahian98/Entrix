@@ -1,4 +1,4 @@
-package com.apexbytestudio.entrix.core.common.time
+package com.apexbytestudio.entrix.domain.time
 
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.flow.Flow

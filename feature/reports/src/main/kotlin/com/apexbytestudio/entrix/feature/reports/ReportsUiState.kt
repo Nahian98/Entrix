@@ -23,7 +23,7 @@ data class ReportsUiState(
     val barAverage: Float? = null,
     val barAverageLabel: String? = null,
     val offices: List<OfficeBreakdownUi> = emptyList(),
-    /** An open visit in this period isn't in the totals yet. */
+    /** An open visit in this period is counted with its time so far. */
     val hasVisitInProgress: Boolean = false,
     val isExporting: Boolean = false,
 ) {

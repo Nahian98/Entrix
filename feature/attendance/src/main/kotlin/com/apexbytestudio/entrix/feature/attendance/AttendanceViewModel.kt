@@ -2,7 +2,7 @@ package com.apexbytestudio.entrix.feature.attendance
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.apexbytestudio.entrix.core.common.time.minuteTicks
+import com.apexbytestudio.entrix.domain.time.minuteTicks
 import com.apexbytestudio.entrix.domain.model.HistoryVisit
 import com.apexbytestudio.entrix.domain.usecase.DeleteAttendanceHistoryUseCase
 import com.apexbytestudio.entrix.domain.usecase.DeleteVisitUseCase

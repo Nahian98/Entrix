@@ -55,7 +55,7 @@ class ReportsViewModelTest {
         averagePerActiveDay = Duration.ofHours(3),
         previousTotal = Duration.ofHours(1),
         bars = listOf("Mon", "Tue", "Wed", "Thu", "Fri", "Sat", "Sun")
-            .mapIndexed { i, day -> ReportBar(day, Duration.ofHours(hours[i])) },
+            .mapIndexed { i, day -> ReportBar(day, Duration.ofHours(hours[i]), start.plusDays(i.toLong()), start.plusDays(i.toLong())) },
         offices = listOf(
             OfficeBreakdown(officeName = "HQ", duration = Duration.ofMinutes(270), visitCount = 1),
             OfficeBreakdown(officeName = "Client", duration = Duration.ofMinutes(90), visitCount = 1),
@@ -138,7 +138,11 @@ class ReportsViewModelTest {
             start = LocalDate.of(2026, 6, 1),
             end = LocalDate.of(2026, 6, 30),
             rangeLabel = "June 2026",
-            bars = (0 until 5).map { ReportBar("w$it", Duration.ofHours(1)) },
+            // June 2026's calendar weeks: 1–7, 8–14, 15–21, 22–28, 29–30.
+            bars = (0 until 5).map {
+                val from = LocalDate.of(2026, 6, 1 + it * 7)
+                ReportBar("w$it", Duration.ofHours(1), from, minOf(from.plusDays(6), LocalDate.of(2026, 6, 30)))
+            },
         )
         every { observeReport(ReportPeriod.Week, any()) } returns flowOf(populated)
         every { observeReport(ReportPeriod.Month, any()) } returns flowOf(month)
@@ -154,7 +158,7 @@ class ReportsViewModelTest {
             assertEquals("This month", switched.title)
             assertEquals("June 2026", switched.dateRange)
             assertEquals(ReportTrend(500, "vs previous month"), switched.trend)
-            assertEquals(3, switched.currentBarIndex) // 25 Jun falls in days 22–28
+            assertEquals(3, switched.currentBarIndex) // 25 Jun falls in the 22–28 week
             cancelAndIgnoreRemainingEvents()
         }
     }

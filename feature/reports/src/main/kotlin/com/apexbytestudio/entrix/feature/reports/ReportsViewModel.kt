@@ -22,7 +22,6 @@ import kotlinx.coroutines.launch
 import java.time.Clock
 import java.time.Duration
 import java.time.LocalDate
-import java.time.temporal.ChronoUnit
 import kotlin.math.roundToInt
 
 @OptIn(ExperimentalCoroutinesApi::class)
@@ -128,15 +127,9 @@ internal fun ReportSnapshot.toUiState(offset: Int, exporting: Boolean, today: Lo
     )
 }
 
-/** Index of the bar containing [today]: a day in a week report, a 7-day chunk in a month report. */
-private fun ReportSnapshot.currentBarIndex(today: LocalDate): Int? {
-    if (today !in start..end) return null
-    val index = when (period) {
-        ReportPeriod.Week -> ChronoUnit.DAYS.between(start, today).toInt()
-        ReportPeriod.Month -> (today.dayOfMonth - 1) / 7
-    }
-    return index.takeIf { it in bars.indices }
-}
+/** Index of the bar whose dates contain [today] (a day, or a calendar week in a month report). */
+private fun ReportSnapshot.currentBarIndex(today: LocalDate): Int? =
+    bars.indexOfFirst { today in it.start..it.end }.takeIf { it >= 0 }
 
 private fun Duration.formatHoursMinutes(): String {
     val hours = toHours()

@@ -2,7 +2,7 @@ package com.apexbytestudio.entrix.feature.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
-import com.apexbytestudio.entrix.core.common.time.minuteTicks
+import com.apexbytestudio.entrix.domain.time.minuteTicks
 import com.apexbytestudio.entrix.domain.model.DashboardSnapshot
 import com.apexbytestudio.entrix.domain.model.OfficeStatus
 import com.apexbytestudio.entrix.domain.usecase.ObserveDashboardUseCase
