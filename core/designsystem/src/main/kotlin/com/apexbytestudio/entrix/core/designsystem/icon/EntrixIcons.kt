@@ -108,15 +108,56 @@ object EntrixIcons {
             }
         }
     }
+
+    /** Trash can, for destructive "clear/delete" actions. */
+    val Delete: ImageVector by lazy {
+        icon("Delete") {
+            strokePath {
+                // Lid and handle.
+                moveTo(4f, 6.5f); horizontalLineTo(20f)
+                moveTo(9.5f, 6.5f); verticalLineTo(5f)
+                arcToRelative(1f, 1f, 0f, false, true, 1f, -1f)
+                horizontalLineToRelative(3f)
+                arcToRelative(1f, 1f, 0f, false, true, 1f, 1f)
+                verticalLineTo(6.5f)
+                // Can body.
+                moveTo(6f, 6.5f)
+                lineTo(6.9f, 18.6f)
+                arcToRelative(2f, 2f, 0f, false, false, 2f, 1.9f)
+                horizontalLineToRelative(6.2f)
+                arcToRelative(2f, 2f, 0f, false, false, 2f, -1.9f)
+                lineTo(18f, 6.5f)
+                // Ribs.
+                moveTo(10f, 10.5f); verticalLineTo(16.5f)
+                moveTo(14f, 10.5f); verticalLineTo(16.5f)
+            }
+        }
+    }
+
+    /** Same line style as the nav icons. Auto-mirrored so it points "back" in RTL layouts. */
+    val Back: ImageVector by lazy {
+        icon("Back", autoMirror = true) {
+            strokePath {
+                moveTo(14.5f, 5.5f)
+                lineTo(8f, 12f)
+                lineTo(14.5f, 18.5f)
+            }
+        }
+    }
 }
 
-private inline fun icon(name: String, block: ImageVector.Builder.() -> Unit): ImageVector =
+private inline fun icon(
+    name: String,
+    autoMirror: Boolean = false,
+    block: ImageVector.Builder.() -> Unit,
+): ImageVector =
     ImageVector.Builder(
         name = name,
         defaultWidth = 24.dp,
         defaultHeight = 24.dp,
         viewportWidth = 24f,
         viewportHeight = 24f,
+        autoMirror = autoMirror,
     ).apply(block).build()
 
 private const val STROKE_WIDTH = 1.5f

@@ -5,13 +5,18 @@ import androidx.compose.foundation.layout.calculateEndPadding
 import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
-import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Scaffold
-import androidx.compose.material3.Text
+import androidx.compose.material3.TopAppBarDefaults
+import androidx.compose.material3.rememberTopAppBarState
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
+import androidx.compose.runtime.key
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.saveable.rememberSaveable
+import androidx.compose.runtime.setValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.input.nestedscroll.nestedScroll
 import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
@@ -41,9 +46,26 @@ fun EntrixApp() {
     val backStackEntry by navController.currentBackStackEntryAsState()
     val currentDestination = backStackEntry?.destination
 
+    // Fresh (expanded) header state per destination, so a collapsed bar on one tab doesn't carry
+    // over to the next.
+    val topBarState = key(backStackEntry?.id) { rememberTopAppBarState() }
+    val scrollBehavior = TopAppBarDefaults.exitUntilCollapsedScrollBehavior(topBarState)
+
+    // "Clear history" is triggered from the header but confirmed by the History screen's dialog.
+    var showClearHistoryDialog by rememberSaveable { mutableStateOf(false) }
+
     Scaffold(
-        modifier = Modifier.fillMaxSize(),
-        topBar = { CenterAlignedTopAppBar(title = { Text("Entrix") }) },
+        modifier = Modifier
+            .fillMaxSize()
+            .nestedScroll(scrollBehavior.nestedScrollConnection),
+        topBar = {
+            EntrixTopBar(
+                backStackEntry = backStackEntry,
+                scrollBehavior = scrollBehavior,
+                onNavigateUp = { navController.navigateUp() },
+                onClearHistory = { showClearHistoryDialog = true },
+            )
+        },
         bottomBar = {
             EntrixNavigationBar {
                 TopLevelDestination.entries.forEach { destination ->
@@ -95,7 +117,11 @@ fun EntrixApp() {
                 )
             }
             composable<EntrixRoute.Attendance> {
-                AttendanceScreen(contentPadding = contentPadding)
+                AttendanceScreen(
+                    showClearDialog = showClearHistoryDialog,
+                    onClearDialogDismiss = { showClearHistoryDialog = false },
+                    contentPadding = contentPadding,
+                )
             }
             composable<EntrixRoute.Reports> {
                 ReportsScreen(contentPadding = contentPadding)

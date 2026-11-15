@@ -31,14 +31,20 @@ import com.apexbytestudio.entrix.core.designsystem.component.LoadingState
 import com.apexbytestudio.entrix.core.designsystem.theme.EntrixSpacing
 import org.koin.androidx.compose.koinViewModel
 
+/**
+ * Attendance history. The "Clear history" trigger lives in the app header, so the confirm dialog's
+ * visibility is hoisted ([showClearDialog] / [onClearDialogDismiss]); the dialog and the delete
+ * itself stay here with the feature.
+ */
 @Composable
 fun AttendanceScreen(
+    showClearDialog: Boolean,
+    onClearDialogDismiss: () -> Unit,
     modifier: Modifier = Modifier,
     contentPadding: PaddingValues = PaddingValues(),
     viewModel: AttendanceViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
-    var showClearDialog by remember { mutableStateOf(false) }
     var pendingDelete by remember { mutableStateOf<AttendanceVisitUi?>(null) }
 
     when {
@@ -49,20 +55,10 @@ fun AttendanceScreen(
             modifier = modifier.padding(contentPadding),
         )
 
-        else -> Column(modifier.fillMaxSize()) {
+        else -> {
             val layoutDirection = LocalLayoutDirection.current
-            Row(
-                modifier = Modifier
-                    .fillMaxWidth()
-                    .padding(horizontal = EntrixSpacing.md),
-                horizontalArrangement = Arrangement.End,
-            ) {
-                TextButton(onClick = { showClearDialog = true }) {
-                    Text("Clear history")
-                }
-            }
             LazyColumn(
-                modifier = Modifier.fillMaxSize(),
+                modifier = modifier.fillMaxSize(),
                 contentPadding = PaddingValues(
                     top = EntrixSpacing.md + contentPadding.calculateTopPadding(),
                     bottom = EntrixSpacing.md + contentPadding.calculateBottomPadding(),
@@ -89,17 +85,17 @@ fun AttendanceScreen(
 
     if (showClearDialog) {
         AlertDialog(
-            onDismissRequest = { showClearDialog = false },
+            onDismissRequest = onClearDialogDismiss,
             title = { Text("Clear history?") },
             text = { Text("This permanently deletes all recorded attendance.") },
             confirmButton = {
                 TextButton(onClick = {
                     viewModel.clearHistory()
-                    showClearDialog = false
+                    onClearDialogDismiss()
                 }) { Text("Delete") }
             },
             dismissButton = {
-                TextButton(onClick = { showClearDialog = false }) { Text("Cancel") }
+                TextButton(onClick = onClearDialogDismiss) { Text("Cancel") }
             },
         )
     }
