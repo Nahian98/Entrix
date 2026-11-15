@@ -6,6 +6,9 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.lazy.LazyColumn
 import androidx.compose.foundation.lazy.items
@@ -20,6 +23,7 @@ import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
 import androidx.compose.ui.Alignment
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.compose.ui.text.font.FontWeight
 import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
@@ -35,24 +39,31 @@ fun OfficeListScreen(
     onAddOffice: () -> Unit,
     onEditOffice: (Long) -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
     viewModel: OfficeListViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
     var pendingDelete by remember { mutableStateOf<OfficeListItemUi?>(null) }
 
     when {
-        uiState.isLoading -> LoadingState(modifier)
+        uiState.isLoading -> LoadingState(modifier.padding(contentPadding))
         uiState.isEmpty -> EmptyState(
             title = "No offices yet",
             description = "Add an office location to start tracking attendance automatically.",
-            modifier = modifier,
+            modifier = modifier.padding(contentPadding),
             action = { EntrixButton(text = "Add office", onClick = onAddOffice) },
         )
 
         else -> Column(modifier.fillMaxSize()) {
+            val layoutDirection = LocalLayoutDirection.current
             LazyColumn(
                 modifier = Modifier.fillMaxSize(),
-                contentPadding = androidx.compose.foundation.layout.PaddingValues(EntrixSpacing.md),
+                contentPadding = PaddingValues(
+                    top = EntrixSpacing.md + contentPadding.calculateTopPadding(),
+                    bottom = EntrixSpacing.md + contentPadding.calculateBottomPadding(),
+                    start = EntrixSpacing.md + contentPadding.calculateStartPadding(layoutDirection),
+                    end = EntrixSpacing.md + contentPadding.calculateEndPadding(layoutDirection),
+                ),
                 verticalArrangement = Arrangement.spacedBy(EntrixSpacing.md),
             ) {
                 item(key = "add") {

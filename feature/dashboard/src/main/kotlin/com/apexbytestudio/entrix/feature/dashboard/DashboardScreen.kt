@@ -5,6 +5,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -28,17 +29,23 @@ fun DashboardScreen(
     uiState: DashboardUiState,
     onManageOffices: () -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
 ) {
     when {
-        uiState.isLoading -> LoadingState(modifier)
+        uiState.isLoading -> LoadingState(modifier.padding(contentPadding))
         !uiState.officeConfigured -> EmptyState(
             title = "No office configured",
             description = "Set up your office location to start tracking attendance automatically.",
-            modifier = modifier,
+            modifier = modifier.padding(contentPadding),
             action = { EntrixButton(text = "Set up office", onClick = onManageOffices) },
         )
 
-        else -> DashboardContent(uiState = uiState, onManageOffices = onManageOffices, modifier = modifier)
+        else -> DashboardContent(
+            uiState = uiState,
+            onManageOffices = onManageOffices,
+            contentPadding = contentPadding,
+            modifier = modifier,
+        )
     }
 }
 
@@ -46,12 +53,14 @@ fun DashboardScreen(
 private fun DashboardContent(
     uiState: DashboardUiState,
     onManageOffices: () -> Unit,
+    contentPadding: PaddingValues = PaddingValues(),
     modifier: Modifier = Modifier,
 ) {
     Column(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .padding(contentPadding)
             .padding(EntrixSpacing.md),
         verticalArrangement = Arrangement.spacedBy(EntrixSpacing.md),
     ) {

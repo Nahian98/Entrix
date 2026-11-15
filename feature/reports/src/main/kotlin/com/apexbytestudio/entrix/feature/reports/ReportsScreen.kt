@@ -7,6 +7,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -35,6 +36,7 @@ import java.io.File
 @Composable
 fun ReportsScreen(
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
     viewModel: ReportsViewModel = koinViewModel(),
 ) {
     val uiState by viewModel.uiState.collectAsStateWithLifecycle()
@@ -50,7 +52,7 @@ fun ReportsScreen(
     }
 
     if (uiState.isLoading) {
-        LoadingState(modifier)
+        LoadingState(modifier.padding(contentPadding))
         return
     }
 
@@ -58,6 +60,7 @@ fun ReportsScreen(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .padding(contentPadding)
             .padding(EntrixSpacing.md),
         verticalArrangement = Arrangement.spacedBy(EntrixSpacing.md),
     ) {

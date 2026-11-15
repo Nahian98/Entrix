@@ -16,6 +16,7 @@ import androidx.compose.foundation.layout.Column
 import androidx.compose.foundation.layout.Row
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.fillMaxWidth
+import androidx.compose.foundation.layout.PaddingValues
 import androidx.compose.foundation.layout.padding
 import androidx.compose.foundation.rememberScrollState
 import androidx.compose.foundation.verticalScroll
@@ -51,6 +52,7 @@ private const val GITHUB_URL = "https://github.com/Nahian98/Entrix"
 fun SettingsScreen(
     onManageOffices: () -> Unit,
     modifier: Modifier = Modifier,
+    contentPadding: PaddingValues = PaddingValues(),
     viewModel: SettingsViewModel = koinViewModel(),
 ) {
     val context = LocalContext.current
@@ -90,6 +92,7 @@ fun SettingsScreen(
         modifier = modifier
             .fillMaxSize()
             .verticalScroll(rememberScrollState())
+            .padding(contentPadding)
             .padding(EntrixSpacing.md),
         verticalArrangement = Arrangement.spacedBy(EntrixSpacing.md),
     ) {

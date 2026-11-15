@@ -1,17 +1,18 @@
 package com.apexbytestudio.entrix.ui
 
+import androidx.compose.foundation.layout.PaddingValues
+import androidx.compose.foundation.layout.calculateEndPadding
+import androidx.compose.foundation.layout.calculateStartPadding
 import androidx.compose.foundation.layout.fillMaxSize
 import androidx.compose.foundation.layout.padding
 import androidx.compose.material3.CenterAlignedTopAppBar
 import androidx.compose.material3.ExperimentalMaterial3Api
-import androidx.compose.material3.Icon
-import androidx.compose.material3.NavigationBar
-import androidx.compose.material3.NavigationBarItem
 import androidx.compose.material3.Scaffold
 import androidx.compose.material3.Text
 import androidx.compose.runtime.Composable
 import androidx.compose.runtime.getValue
 import androidx.compose.ui.Modifier
+import androidx.compose.ui.platform.LocalLayoutDirection
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
@@ -21,6 +22,8 @@ import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
 import androidx.navigation.compose.rememberNavController
 import androidx.navigation.toRoute
+import com.apexbytestudio.entrix.core.designsystem.component.EntrixNavigationBar
+import com.apexbytestudio.entrix.core.designsystem.component.EntrixNavigationBarItem
 import com.apexbytestudio.entrix.core.navigation.EntrixRoute
 import com.apexbytestudio.entrix.feature.attendance.AttendanceScreen
 import com.apexbytestudio.entrix.feature.dashboard.DashboardScreen
@@ -42,12 +45,12 @@ fun EntrixApp() {
         modifier = Modifier.fillMaxSize(),
         topBar = { CenterAlignedTopAppBar(title = { Text("Entrix") }) },
         bottomBar = {
-            NavigationBar {
+            EntrixNavigationBar {
                 TopLevelDestination.entries.forEach { destination ->
                     val selected = currentDestination?.hierarchy?.any {
                         it.hasRoute(destination.route::class)
                     } == true
-                    NavigationBarItem(
+                    EntrixNavigationBarItem(
                         selected = selected,
                         onClick = {
                             navController.navigate(destination.route) {
@@ -58,19 +61,29 @@ fun EntrixApp() {
                                 restoreState = true
                             }
                         },
-                        icon = { Icon(destination.icon, contentDescription = destination.label) },
-                        label = { Text(destination.label) },
+                        label = destination.label,
+                        selectedIcon = destination.selectedIcon,
+                        unselectedIcon = destination.unselectedIcon,
                     )
                 }
             }
         },
     ) { innerPadding ->
+        // Only the top and side insets are applied to the NavHost: the bottom (floating nav bar +
+        // system bar) is handed to each screen as scrollable content padding, so content scrolls
+        // behind the transparent area around the pill instead of being cut off above it.
+        val layoutDirection = LocalLayoutDirection.current
+        val contentPadding = PaddingValues(bottom = innerPadding.calculateBottomPadding())
         NavHost(
             navController = navController,
             startDestination = EntrixRoute.Dashboard,
             modifier = Modifier
                 .fillMaxSize()
-                .padding(innerPadding),
+                .padding(
+                    top = innerPadding.calculateTopPadding(),
+                    start = innerPadding.calculateStartPadding(layoutDirection),
+                    end = innerPadding.calculateEndPadding(layoutDirection),
+                ),
         ) {
             composable<EntrixRoute.Dashboard> {
                 val viewModel: DashboardViewModel = koinViewModel()
@@ -78,23 +91,26 @@ fun EntrixApp() {
                 DashboardScreen(
                     uiState = uiState,
                     onManageOffices = { navController.navigate(EntrixRoute.OfficeList) },
+                    contentPadding = contentPadding,
                 )
             }
             composable<EntrixRoute.Attendance> {
-                AttendanceScreen()
+                AttendanceScreen(contentPadding = contentPadding)
             }
             composable<EntrixRoute.Reports> {
-                ReportsScreen()
+                ReportsScreen(contentPadding = contentPadding)
             }
             composable<EntrixRoute.Settings> {
                 SettingsScreen(
                     onManageOffices = { navController.navigate(EntrixRoute.OfficeList) },
+                    contentPadding = contentPadding,
                 )
             }
             composable<EntrixRoute.OfficeList> {
                 OfficeListScreen(
                     onAddOffice = { navController.navigate(EntrixRoute.OfficeEdit()) },
                     onEditOffice = { id -> navController.navigate(EntrixRoute.OfficeEdit(id)) },
+                    contentPadding = contentPadding,
                 )
             }
             composable<EntrixRoute.OfficeEdit> { backStackEntry ->
@@ -102,6 +118,7 @@ fun EntrixApp() {
                 OfficeScreen(
                     officeId = route.officeId,
                     onSaved = { navController.popBackStack() },
+                    contentPadding = contentPadding,
                 )
             }
         }
