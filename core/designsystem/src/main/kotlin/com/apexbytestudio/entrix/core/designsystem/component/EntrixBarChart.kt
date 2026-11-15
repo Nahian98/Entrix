@@ -38,7 +38,8 @@ fun EntrixBarChart(
     entries: List<EntrixBarEntry>,
     modifier: Modifier = Modifier,
     barColor: Color = MaterialTheme.colorScheme.primary,
-    trackColor: Color = MaterialTheme.colorScheme.surfaceVariant,
+    // A quiet surface tone, so empty days recede and the accent bars carry the chart.
+    trackColor: Color = MaterialTheme.colorScheme.surfaceContainerHighest,
     chartHeight: Dp = 160.dp,
 ) {
     if (entries.isEmpty()) return

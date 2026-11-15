@@ -71,8 +71,8 @@ object EntrixNavigationBarDefaults {
         border = Color.Transparent,
     )
     private val Dark = EntrixNavigationBarColors(
-        container = Color(0xFF242428),
-        indicator = Color(0xFF3B3B41),
+        container = Color(0xFF232725),
+        indicator = Color(0xFF363B39),
         content = Color.White,
         border = Color.White.copy(alpha = 0.08f),
     )

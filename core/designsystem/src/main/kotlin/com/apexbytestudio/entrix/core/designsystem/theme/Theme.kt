@@ -8,10 +8,15 @@ import androidx.compose.material3.dynamicLightColorScheme
 import androidx.compose.runtime.Composable
 import androidx.compose.ui.platform.LocalContext
 
+/**
+ * App theme. Uses the Entrix emerald palette ([LightColors] / [DarkColors]) by default so the brand
+ * looks the same on every device. [dynamicColor] opts into wallpaper-based Material You colours on
+ * Android 12+ instead.
+ */
 @Composable
 fun EntrixTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
-    dynamicColor: Boolean = true,
+    dynamicColor: Boolean = false,
     content: @Composable () -> Unit,
 ) {
     val context = LocalContext.current
