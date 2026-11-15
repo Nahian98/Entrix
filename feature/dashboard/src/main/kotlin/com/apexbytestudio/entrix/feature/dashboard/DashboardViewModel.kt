@@ -2,17 +2,15 @@ package com.apexbytestudio.entrix.feature.dashboard
 
 import androidx.lifecycle.ViewModel
 import androidx.lifecycle.viewModelScope
+import com.apexbytestudio.entrix.core.common.time.minuteTicks
 import com.apexbytestudio.entrix.domain.model.DashboardSnapshot
 import com.apexbytestudio.entrix.domain.model.OfficeStatus
 import com.apexbytestudio.entrix.domain.usecase.ObserveDashboardUseCase
 import com.apexbytestudio.entrix.domain.usecase.ReconcileOpenVisitsUseCase
 import kotlinx.coroutines.ExperimentalCoroutinesApi
-import kotlinx.coroutines.delay
-import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.SharingStarted
 import kotlinx.coroutines.flow.StateFlow
 import kotlinx.coroutines.flow.flatMapLatest
-import kotlinx.coroutines.flow.flow
 import kotlinx.coroutines.flow.flowOf
 import kotlinx.coroutines.flow.map
 import kotlinx.coroutines.flow.stateIn
@@ -34,7 +32,7 @@ class DashboardViewModel(
     @OptIn(ExperimentalCoroutinesApi::class)
     val uiState: StateFlow<DashboardUiState> = observeDashboard()
         .flatMapLatest { snapshot ->
-            val now = if (snapshot.isInsideAnyOffice) minuteTicks() else flowOf(clock.instant())
+            val now = if (snapshot.isInsideAnyOffice) minuteTicks(clock) else flowOf(clock.instant())
             now.map { snapshot.toUiState(it, clock) }
         }
         .stateIn(
@@ -48,18 +46,8 @@ class DashboardViewModel(
         viewModelScope.launch { reconcileOpenVisits() }
     }
 
-    /** Emits now, then again at each wall-clock minute boundary so the display flips on time. */
-    private fun minuteTicks(): Flow<Instant> = flow {
-        while (true) {
-            val now = clock.instant()
-            emit(now)
-            delay(MINUTE_MILLIS - now.toEpochMilli() % MINUTE_MILLIS)
-        }
-    }
-
     private companion object {
         const val STOP_TIMEOUT_MILLIS = 5_000L
-        const val MINUTE_MILLIS = 60_000L
     }
 }
 

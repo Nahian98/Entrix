@@ -8,15 +8,22 @@ data class AttendanceUiState(
 }
 
 data class AttendanceDayUi(
-    val date: String,
+    /** Stable key (ISO date) for the list. */
+    val key: String,
+    /** "Today", "Yesterday", or a short date such as "Wed, 11 Nov". */
+    val label: String,
+    /** Time spent that day across all visits; null when nothing has accrued yet. */
+    val total: String?,
     val visits: List<AttendanceVisitUi>,
 )
 
 data class AttendanceVisitUi(
     val id: Long,
     val officeName: String,
-    val entry: String,
-    val exit: String,
+    /** "09:28 – 18:14", or "17:39 – now" while the visit is still open. */
+    val timeRange: String,
+    /** Completed duration, or time so far for an open visit. */
     val duration: String,
+    val inProgress: Boolean = false,
     val needsReview: Boolean = false,
 )

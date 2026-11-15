@@ -109,6 +109,17 @@ object EntrixIcons {
         }
     }
 
+    /** Vertical ellipsis, for an overflow menu of secondary actions. */
+    val More: ImageVector by lazy {
+        icon("More") {
+            fillPath {
+                circle(12f, 5.5f, 1.6f)
+                circle(12f, 12f, 1.6f)
+                circle(12f, 18.5f, 1.6f)
+            }
+        }
+    }
+
     /** Trash can, for destructive "clear/delete" actions. */
     val Delete: ImageVector by lazy {
         icon("Delete") {
