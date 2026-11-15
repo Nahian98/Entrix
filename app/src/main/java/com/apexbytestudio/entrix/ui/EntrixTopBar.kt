@@ -1,5 +1,8 @@
 package com.apexbytestudio.entrix.ui
 
+import androidx.compose.foundation.layout.Box
+import androidx.compose.foundation.layout.size
+import androidx.compose.material3.CircularProgressIndicator
 import androidx.compose.material3.ExperimentalMaterial3Api
 import androidx.compose.material3.Icon
 import androidx.compose.material3.IconButton
@@ -9,6 +12,9 @@ import androidx.compose.runtime.getValue
 import androidx.compose.runtime.mutableStateOf
 import androidx.compose.runtime.remember
 import androidx.compose.runtime.setValue
+import androidx.compose.ui.Alignment
+import androidx.compose.ui.Modifier
+import androidx.compose.ui.unit.dp
 import androidx.lifecycle.compose.LifecycleResumeEffect
 import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavBackStackEntry
@@ -18,6 +24,7 @@ import com.apexbytestudio.entrix.core.designsystem.component.EntrixTopAppBar
 import com.apexbytestudio.entrix.core.designsystem.icon.EntrixIcons
 import com.apexbytestudio.entrix.core.navigation.EntrixRoute
 import com.apexbytestudio.entrix.feature.attendance.AttendanceViewModel
+import com.apexbytestudio.entrix.feature.reports.ReportsViewModel
 import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import java.util.Locale
@@ -61,8 +68,26 @@ fun EntrixTopBar(
             )
         }
 
-        destination.hasRoute(EntrixRoute.Reports::class) ->
-            EntrixTopAppBar(title = "Reports", scrollBehavior = scrollBehavior)
+        destination.hasRoute(EntrixRoute.Reports::class) -> {
+            // Same ViewModel instance as the Reports screen, which collects the share/error events.
+            val viewModel: ReportsViewModel = koinViewModel(viewModelStoreOwner = backStackEntry)
+            val uiState by viewModel.uiState.collectAsStateWithLifecycle()
+            EntrixTopAppBar(
+                title = "Reports",
+                scrollBehavior = scrollBehavior,
+                actions = {
+                    if (uiState.isExporting) {
+                        Box(Modifier.size(48.dp), contentAlignment = Alignment.Center) {
+                            CircularProgressIndicator(Modifier.size(20.dp), strokeWidth = 2.dp)
+                        }
+                    } else if (uiState.hasData) {
+                        IconButton(onClick = viewModel::exportPdf) {
+                            Icon(EntrixIcons.Export, contentDescription = "Export PDF")
+                        }
+                    }
+                },
+            )
+        }
 
         destination.hasRoute(EntrixRoute.Settings::class) ->
             EntrixTopAppBar(title = "Settings", scrollBehavior = scrollBehavior)

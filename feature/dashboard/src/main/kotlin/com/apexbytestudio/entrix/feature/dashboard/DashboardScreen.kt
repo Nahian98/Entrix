@@ -45,6 +45,7 @@ import androidx.compose.ui.text.style.TextOverflow
 import androidx.compose.ui.tooling.preview.Preview
 import androidx.compose.ui.unit.dp
 import com.apexbytestudio.entrix.core.designsystem.component.EntrixButton
+import com.apexbytestudio.entrix.core.designsystem.component.EntrixStatTile
 import com.apexbytestudio.entrix.core.designsystem.component.LoadingState
 import com.apexbytestudio.entrix.core.designsystem.theme.EntrixSpacing
 import com.apexbytestudio.entrix.core.designsystem.theme.EntrixTheme
@@ -223,28 +224,7 @@ private fun TodayFacts(facts: List<TodayFact>) {
         horizontalArrangement = Arrangement.spacedBy(EntrixSpacing.sm),
     ) {
         facts.forEach { fact ->
-            Surface(
-                modifier = Modifier
-                    .weight(1f)
-                    .semantics(mergeDescendants = true) {},
-                shape = RoundedCornerShape(20.dp),
-                color = MaterialTheme.colorScheme.surfaceContainer,
-            ) {
-                Column(Modifier.padding(horizontal = EntrixSpacing.md, vertical = 14.dp)) {
-                    Text(
-                        text = fact.value,
-                        style = MaterialTheme.typography.titleLarge,
-                        fontWeight = FontWeight.SemiBold,
-                        maxLines = 1,
-                    )
-                    Text(
-                        text = fact.label,
-                        style = MaterialTheme.typography.labelMedium,
-                        color = MaterialTheme.colorScheme.onSurfaceVariant,
-                        maxLines = 1,
-                    )
-                }
-            }
+            EntrixStatTile(value = fact.value, label = fact.label, modifier = Modifier.weight(1f))
         }
     }
 }

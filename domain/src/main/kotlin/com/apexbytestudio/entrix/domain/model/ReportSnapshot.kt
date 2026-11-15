@@ -35,6 +35,8 @@ data class ReportSnapshot(
     val previousTotal: Duration,
     val bars: List<ReportBar>,
     val offices: List<OfficeBreakdown>,
+    /** A visit in this period is still open; it joins the totals once it ends. */
+    val hasVisitInProgress: Boolean = false,
 ) {
     val hasData: Boolean get() = visitCount > 0
 

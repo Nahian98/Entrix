@@ -109,6 +109,32 @@ object EntrixIcons {
         }
     }
 
+    /** Chevron pointing "forward"; the mirror of [Back]. Auto-mirrored for RTL. */
+    val Forward: ImageVector by lazy {
+        icon("Forward", autoMirror = true) {
+            strokePath {
+                moveTo(9.5f, 5.5f)
+                lineTo(16f, 12f)
+                lineTo(9.5f, 18.5f)
+            }
+        }
+    }
+
+    /** Arrow rising out of a tray: export / share a file. */
+    val Export: ImageVector by lazy {
+        icon("Export") {
+            strokePath {
+                moveTo(12f, 14.5f); verticalLineTo(4f)
+                moveTo(8f, 8f); lineTo(12f, 4f); lineTo(16f, 8f)
+                moveTo(5f, 13f); verticalLineTo(17.5f)
+                arcToRelative(2.5f, 2.5f, 0f, false, false, 2.5f, 2.5f)
+                horizontalLineToRelative(9f)
+                arcToRelative(2.5f, 2.5f, 0f, false, false, 2.5f, -2.5f)
+                verticalLineTo(13f)
+            }
+        }
+    }
+
     /** Vertical ellipsis, for an overflow menu of secondary actions. */
     val More: ImageVector by lazy {
         icon("More") {

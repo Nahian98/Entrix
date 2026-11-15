@@ -58,6 +58,7 @@ class ObserveReportUseCaseTest {
             assertEquals(500, report.trendPercent) // (6h - 1h) / 1h
             assertEquals(1, report.offices.size)
             assertEquals("HQ", report.offices.single().officeName)
+            assertTrue(report.hasVisitInProgress) // the open Wed visit
 
             cancelAndIgnoreRemainingEvents()
         }
@@ -74,6 +75,7 @@ class ObserveReportUseCaseTest {
             assertEquals(Duration.ZERO, report.totalDuration)
             assertNull(report.trendPercent)
             assertEquals(7, report.bars.size)
+            assertFalse(report.hasVisitInProgress)
 
             cancelAndIgnoreRemainingEvents()
         }

@@ -47,10 +47,12 @@ class ObserveReportUseCase(
 
         val completed = history.filter { it.exitTime != null }
         val inRange = completed.filter { it.enterDate() in start..end }
+        val hasVisitInProgress = history.any { it.exitTime == null && it.enterDate() in start..end }
         if (inRange.isEmpty()) {
             return ReportSnapshot.empty(period, start, end, rangeLabel).copy(
                 previousTotal = completed.filter { it.enterDate() in prevStart..prevEnd }.totalDuration(),
                 bars = emptyBars(period, start, end),
+                hasVisitInProgress = hasVisitInProgress,
             )
         }
 
@@ -78,6 +80,7 @@ class ObserveReportUseCase(
                     )
                 }
                 .sortedByDescending { it.duration },
+            hasVisitInProgress = hasVisitInProgress,
         )
     }
 
