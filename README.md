@@ -23,23 +23,25 @@ Most attendance apps want a login, a server, and your data. Entrix is the opposi
 
 - 📍 Track **multiple offices**, each with its own location and geofence radius
 - 🗺️ **Map location picker** — search an address or tap the map to drop a pin and size the geofence, with a full-screen map for fine-tuning (Google Maps)
-- 🟢 Automatic, battery-friendly **entry / exit detection** via geofencing (no continuous polling, no foreground service)
-- 🕓 Local attendance history, grouped by day and labelled per office
-- 📊 **Weekly & monthly reports** — totals, days present, per-office breakdown, a bar chart, and trend vs. the previous period
+- 🟢 Automatic, battery-friendly **entry / exit detection** via geofencing (no continuous polling, no foreground service), hardened against GPS jitter and false exits
+- 🏠 **Live home screen** — where you are right now and today's time so far, ticking every minute, plus a clear warning (and one-tap fix) when tracking is paused
+- 🕓 **History** grouped by day ("Today", "Yesterday", …) with a total per day; a visit in progress counts up live
+- 📊 **Weekly & monthly reports** — total with trend vs. the previous period, days at office, average per day, an interactive bar chart (tap a day, dashed average line), and per-office share of time
+- ✅ **Tracking setup checklist** in Settings — shows exactly which permission or battery setting is holding tracking back, and why it matters
 - 📄 **Export timesheets to PDF** and share them — generated on-device, no third-party libraries
 - 🗑️ Delete an office without losing its data — offices are **archived**, so past history and timesheets stay intact
 - 🔒 Private by default — no account, no analytics, no ads; attendance data never leaves the device
-- 🎨 Material 3 UI with dynamic color, light/dark themes
+- 🎨 Material 3 UI with a custom emerald palette tuned separately for light and dark, a floating navigation bar and a custom icon set
 - 🔁 Geofences automatically restored after device reboot
 
 ## Screenshots
 
-Material 3 UI with full light & dark theme support (and Material You dynamic color).
+Material 3 UI with a custom emerald palette in light & dark, a floating pill navigation bar and collapsing headers. (Sample data.)
 
-| Dashboard | History | Settings |
-|:---:|:---:|:---:|
-| <img src="docs/screenshots/dashboard-light.jpg" width="230" alt="Dashboard (light)"> | <img src="docs/screenshots/history-light.jpg" width="230" alt="History (light)"> | <img src="docs/screenshots/settings-light.jpg" width="230" alt="Settings (light)"> |
-| <img src="docs/screenshots/dashboard-dark.jpg" width="230" alt="Dashboard (dark)"> | <img src="docs/screenshots/history-dark.jpg" width="230" alt="History (dark)"> | <img src="docs/screenshots/settings-dark.jpg" width="230" alt="Settings (dark)"> |
+| Home | History | Reports | Settings |
+|:---:|:---:|:---:|:---:|
+| <img src="docs/screenshots/dashboard-light.jpg" width="200" alt="Home (light)"> | <img src="docs/screenshots/history-light.jpg" width="200" alt="History (light)"> | <img src="docs/screenshots/reports-light.jpg" width="200" alt="Reports (light)"> | <img src="docs/screenshots/settings-light.jpg" width="200" alt="Settings (light)"> |
+| <img src="docs/screenshots/dashboard-dark.jpg" width="200" alt="Home (dark)"> | <img src="docs/screenshots/history-dark.jpg" width="200" alt="History (dark)"> | <img src="docs/screenshots/reports-dark.jpg" width="200" alt="Reports (dark)"> | <img src="docs/screenshots/settings-dark.jpg" width="200" alt="Settings (dark)"> |
 
 ---
 
@@ -95,17 +97,17 @@ Key rule: **`:domain` and `:core:model` are pure Kotlin/JVM modules** — they c
 
 | Module | Type | Responsibility |
 |---|---|---|
-| `:app` | app | Application, Koin start-up, navigation host, theme entry, composition root |
-| `:feature:dashboard` | android-lib | Per-office status + today's totals |
-| `:feature:attendance` | android-lib | History list, grouped by day and labelled per office; delete |
+| `:app` | app | Application, Koin start-up, navigation host, app shell (floating nav bar, per-screen headers), composition root |
+| `:feature:dashboard` | android-lib | Home: live status card, today's facts, per-office presence, first-run welcome |
+| `:feature:attendance` | android-lib | History grouped by day with day totals and live open visits; delete |
 | `:feature:office` | android-lib | Manage offices — list, add/edit (map picker + search), archive |
-| `:feature:reports` | android-lib | Weekly/monthly reports, bar chart, PDF export |
-| `:feature:settings` | android-lib | Tracking toggle, permissions, battery, about |
-| `:domain` | **JVM** | Entities-adjacent models, repository interfaces, use cases |
+| `:feature:reports` | android-lib | Weekly/monthly reports, interactive bar chart, office shares, PDF export |
+| `:feature:settings` | android-lib | Tracking main switch, setup checklist (permissions, battery), data export, about |
+| `:domain` | **JVM** | Entities-adjacent models, repository interfaces, use cases, minute ticker for live values |
 | `:data` | android-lib | Repository implementations, entity↔model mappers, DI |
 | `:core:model` | **JVM** | Shared domain models (`Office`, `Attendance`, …) |
 | `:core:common` | android-lib | Dispatchers, `AppResult`, shared utilities |
-| `:core:designsystem` | android-lib | Theme, spacing, reusable Compose components (incl. bar chart) |
+| `:core:designsystem` | android-lib | Emerald theme, spacing, custom icon set, reusable components (nav bar, collapsing header, bar chart, stat tile, toggle) |
 | `:core:navigation` | android-lib | Type-safe navigation routes |
 | `:core:database` | android-lib | Room database, DAOs, entities (schema exported, migrated) |
 | `:core:datastore` | android-lib | Preferences DataStore |
@@ -145,9 +147,12 @@ Entrix never polls location. It registers one geofence per configured office and
 ENTER  →  cache the precise crossing time (persisted per office, survives process death)
 DWELL  →  open a visit, back-dated to the cached ENTER time
 EXIT   →  close the open visit; discard any unconfirmed ENTER
+ENTER/DWELL within 10 min of a check-out  →  reopen that visit instead (exit grace period)
 ```
 
 A visit is only created once the user has **dwelled** (~2 min) inside the region — so a brief pass near the boundary leaves no record — yet `enterTime` is still the real moment of entry because the ENTER timestamp was cached. The pending ENTER is tracked **per office**, so simultaneous visits to different offices never interfere. Every branch is idempotent, so duplicate transitions can't corrupt state. This logic is covered by unit tests.
+
+Exits get the same protection: indoors, a single coarse network fix (often requested by *another* app) can land outside the circle and fire a false EXIT followed moments later by an ENTER. Rather than leaving the user "checked out" while still inside, a re-entry within the **10-minute grace period** reopens the visit with its original entry time; a real departure is unaffected because nobody re-enters within minutes. Separately, a visit left open for 16 hours (a genuinely missed EXIT) is capped and flagged for review rather than growing into a multi-day "visit".
 
 Geofences are re-registered on boot, transitions are handled in a `BroadcastReceiver` via `goAsync()` (no foreground service), and Google Play Services availability and permission revocation are handled gracefully.
 
@@ -177,8 +182,8 @@ The key needs the **Maps SDK for Android** and **Geocoding API** enabled and add
 
 ## Testing
 
-- **56 JVM unit tests** across the domain, data and feature modules — including the geofence reconciliation policy, multi-office dashboard/report aggregation, PDF timesheet assembly, office validation & location search, ViewModels, and persistence mappers.
-- **Instrumented Room tests** — DAO open/close + foreign-key cascade, and a **v1→v2 migration test** verifying the `archived` column is added without losing data — run on a device with `./gradlew connectedDebugAndroidTest`.
+- **93 JVM unit tests** across the domain, data and feature modules — including the geofence reconciliation policy and exit grace period, live "time so far" ticking (driven by an injected `Clock` and virtual time), multi-office dashboard/history/report aggregation, PDF timesheet assembly, office validation & location search, ViewModels, and persistence mappers.
+- **Instrumented Room tests** — DAO open/close/reopen + foreign-key cascade, and a **v1→v2 migration test** verifying the `archived` column is added without losing data — run on a device with `./gradlew connectedDebugAndroidTest`.
 - Room validates all DAO SQL **at compile time** via KSP; the schema is exported to `core/database/schemas/` and migrations are tested against it.
 - A `KoinGraphTest` statically `verify()`s the full DI graph, catching missing bindings at build time.
 
@@ -195,6 +200,8 @@ Delivered:
 - [x] CI (GitHub Actions: build + tests + lint) and a Koin graph `verify()` check
 - [x] Screenshots (light & dark)
 - [x] Map location picker with address search
+- [x] UI redesign — live home screen, day-grouped history, interactive reports, setup checklist, emerald palette
+- [x] Exit grace period against false check-outs (verified on a real device)
 
 Planned:
 
