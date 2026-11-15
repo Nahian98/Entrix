@@ -59,6 +59,8 @@ class ObserveDashboardUseCaseTest {
             assertEquals(Instant.parse("2026-06-28T11:00:00Z"), hq.todayFirstEnter)
             // The open visit today has no completed duration; yesterday's visit is excluded.
             assertEquals(Duration.ZERO, hq.todayCompletedDuration)
+            assertEquals(Instant.parse("2026-06-28T11:00:00Z"), hq.currentVisitStart)
+            assertEquals(1, hq.todayVisitCount)
             assertTrue(snapshot.trackingEnabled)
 
             cancelAndIgnoreRemainingEvents()
@@ -83,6 +85,8 @@ class ObserveDashboardUseCaseTest {
             val client = snapshot.offices.first { it.office.id == 2L }
             assertTrue(hq.isInside)
             assertFalse(client.isInside)
+            assertEquals(null, client.currentVisitStart)
+            assertEquals(1, client.todayVisitCount)
             assertEquals(Duration.ofHours(2), client.todayCompletedDuration)
             assertEquals(Duration.ofHours(2), snapshot.todayTotalDuration)
 

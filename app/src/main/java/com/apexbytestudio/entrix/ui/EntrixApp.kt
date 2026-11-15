@@ -22,6 +22,7 @@ import androidx.lifecycle.compose.collectAsStateWithLifecycle
 import androidx.navigation.NavDestination.Companion.hasRoute
 import androidx.navigation.NavDestination.Companion.hierarchy
 import androidx.navigation.NavGraph.Companion.findStartDestination
+import androidx.navigation.NavHostController
 import androidx.navigation.compose.NavHost
 import androidx.navigation.compose.composable
 import androidx.navigation.compose.currentBackStackEntryAsState
@@ -74,15 +75,7 @@ fun EntrixApp() {
                     } == true
                     EntrixNavigationBarItem(
                         selected = selected,
-                        onClick = {
-                            navController.navigate(destination.route) {
-                                popUpTo(navController.graph.findStartDestination().id) {
-                                    saveState = true
-                                }
-                                launchSingleTop = true
-                                restoreState = true
-                            }
-                        },
+                        onClick = { navController.navigateToTopLevel(destination.route) },
                         label = destination.label,
                         selectedIcon = destination.selectedIcon,
                         unselectedIcon = destination.unselectedIcon,
@@ -112,7 +105,10 @@ fun EntrixApp() {
                 val uiState by viewModel.uiState.collectAsStateWithLifecycle()
                 DashboardScreen(
                     uiState = uiState,
+                    onAddOffice = { navController.navigate(EntrixRoute.OfficeEdit()) },
                     onManageOffices = { navController.navigate(EntrixRoute.OfficeList) },
+                    onOpenOffice = { id -> navController.navigate(EntrixRoute.OfficeEdit(id)) },
+                    onTurnOnTracking = { navController.navigateToTopLevel(EntrixRoute.Settings) },
                     contentPadding = contentPadding,
                 )
             }
@@ -148,5 +144,17 @@ fun EntrixApp() {
                 )
             }
         }
+    }
+}
+
+/**
+ * Switches to a bottom-bar tab: one copy of each tab on the back stack, with each tab's own
+ * state saved and restored.
+ */
+private fun NavHostController.navigateToTopLevel(route: EntrixRoute) {
+    navigate(route) {
+        popUpTo(graph.findStartDestination().id) { saveState = true }
+        launchSingleTop = true
+        restoreState = true
     }
 }

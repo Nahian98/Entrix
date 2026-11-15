@@ -45,6 +45,10 @@ class ObserveDashboardUseCase(
                     todayCompletedDuration = todayVisits.fold(Duration.ZERO) { acc, visit ->
                         acc + (visit.duration ?: Duration.ZERO)
                     },
+                    currentVisitStart = openVisits
+                        .filter { it.officeId == office.id }
+                        .minOfOrNull { it.enterTime },
+                    todayVisitCount = todayVisits.size,
                 )
             },
             trackingEnabled = trackingEnabled,

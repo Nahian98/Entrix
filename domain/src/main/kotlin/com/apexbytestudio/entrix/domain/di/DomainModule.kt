@@ -19,9 +19,13 @@ import com.apexbytestudio.entrix.domain.usecase.SearchLocationUseCase
 import com.apexbytestudio.entrix.domain.usecase.SetTrackingEnabledUseCase
 import com.apexbytestudio.entrix.domain.usecase.SyncGeofencesUseCase
 import org.koin.dsl.module
+import java.time.Clock
 
 /** Use cases are stateless; declaring them as `factory` keeps them cheap and side-effect free. */
 val domainModule = module {
+    // Factory, not single: Clock.systemDefaultZone() captures the zone, so a fresh one picks up a
+    // device time-zone change.
+    factory<Clock> { Clock.systemDefaultZone() }
     factory { SaveOfficeUseCase(get()) }
     factory { ObserveOfficeUseCase(get()) }
     factory { ObserveOfficesUseCase(get()) }
