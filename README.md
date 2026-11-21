@@ -4,7 +4,7 @@
 
 Entrix is a privacy-first Android app that automatically records when you enter and leave your offices using the Android Geofencing API — then turns those visits into history, reports and shareable PDF timesheets. No account, no analytics, no ads, and your attendance data never leaves the device. The only online touchpoint is the optional Google Maps picker used when setting up an office.
 
-[![CI](https://github.com/Nahian98/Entrix-pro/actions/workflows/ci.yml/badge.svg)](https://github.com/Nahian98/Entrix-pro/actions/workflows/ci.yml)
+[![CI](https://github.com/Nahian98/Entrix/actions/workflows/ci.yml/badge.svg)](https://github.com/Nahian98/Entrix/actions/workflows/ci.yml)
 ![Kotlin](https://img.shields.io/badge/Kotlin-2.2-7F52FF?logo=kotlin&logoColor=white)
 ![Compose](https://img.shields.io/badge/Jetpack%20Compose-Material%203-4285F4?logo=jetpackcompose&logoColor=white)
 ![Min SDK](https://img.shields.io/badge/minSdk-28-3DDC84?logo=android&logoColor=white)
@@ -210,4 +210,4 @@ Planned:
 
 ## License
 
-MIT — see `LICENSE`. (Add a `LICENSE` file if one isn't present yet.)
+MIT — see [`LICENSE`](LICENSE).
